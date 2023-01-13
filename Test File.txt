@@ -1,1 +1,1 @@
-this is a test of the github repo.
+This is a test of the github repo.
