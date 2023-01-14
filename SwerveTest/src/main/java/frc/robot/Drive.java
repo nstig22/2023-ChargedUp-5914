@@ -22,7 +22,7 @@ public class Drive  {
 
     //  Need to assign 8 CAN addresses. 
     int frontLeft_driveID=1;
-    int frontRight_driveID=2; //6
+    int frontRight_driveID=2;
     int rearLeft_driveID=3;
     int rearRight_driveID=4;
 
