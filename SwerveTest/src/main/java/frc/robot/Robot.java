@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -23,6 +24,10 @@ public class Robot extends TimedRobot {
   SwerveDrive drive;
   double error;
 
+  Joystick stick;
+
+  int count = 0;
+
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -34,6 +39,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData("Auto choices", m_chooser);
 
     drive=new SwerveDrive();
+    stick=new Joystick(0);
   }
 
   /**
@@ -84,14 +90,22 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    error=drive.rotateRight(45.0);
-    System.out.printf("\nerror = %.3lf\n",error);
+    //error=drive.rotateLeft(90.0);
+    //System.out.printf("\nerror = %.3lf\n",error);
+    drive.rotateLeft(90.0);
+
+    /*count++;
+    if (count == 100){
+      error = drive.return2Zero();
+      count = 0;
+    }*/
+    
   }
 
   /** This function is called once when the robot is disabled. */
   @Override
   public void disabledInit() {}
-
+ 
   /** This function is called periodically when disabled. */
   @Override
   public void disabledPeriodic() {}

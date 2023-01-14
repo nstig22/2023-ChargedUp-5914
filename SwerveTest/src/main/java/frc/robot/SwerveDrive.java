@@ -6,7 +6,12 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 
-public class SwerveDrive {
+public class SwerveDrive extends Robot{
+
+    //Debug code
+    int zeroInit = 1;
+    int updateCounter = 0;
+    double count = 0;
 
     private int turn_ID=7;
     private int drive_ID=6;
@@ -15,13 +20,13 @@ public class SwerveDrive {
     int drive_init=1;
 
     //  Gear reduction boxes
-    private double turn_reduce=16.0;
+    private double turn_reduce=20.0;
     private double drive_reduce=4.0;
 
     //  Ring and pinion teeth
-    private double turn_pinion=38.0;
+    private double turn_pinion=33.0;
     private double turn_ring=80.0;
-    private double drive_pinion=38.0;
+    private double drive_pinion=33.0;
     private double drive_ring=64.0;
 
     private double wheel_diameter=4.0;
@@ -47,7 +52,8 @@ public class SwerveDrive {
         delay=new Delay();
 
         falcon_turn = new WPI_TalonFX(turn_ID);   
-        falcon_turn.setNeutralMode(NeutralMode.Coast);
+        falcon_turn.setNeutralMode(NeutralMode.Brake);
+        falcon_turn.setInverted(true);
         falcon_turn.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor,0, 50);
 
         falcon_drive = new WPI_TalonFX(drive_ID);   
@@ -277,7 +283,7 @@ public class SwerveDrive {
     /////////////////////////////////////////////////////////////////
     double rotateLeft(double degrees)
     {
-        double count;
+        //double count;
         double error;
 
         //  First time through, get the initial position
@@ -288,31 +294,54 @@ public class SwerveDrive {
             // computation of degree counts will be positive.
             turn_target=initial_count - compute_countsDegrees(degrees);
             rotate_init=0;
+
+            System.out.printf("Initial count = %.3f\n", initial_count);
+
+            System.out.printf("Turn target = %.3f\n",turn_target);
         }
         
-        falcon_turn.set(ControlMode.PercentOutput, -turn_power);
+        if (count > turn_target){
+            falcon_turn.set(ControlMode.PercentOutput, -0.5);
 
-        delay.delay_milliseconds(10.0);
+            delay.delay_milliseconds(20.0);
+    
+            count=falcon_turn.getSelectedSensorPosition(0);
+    
+            updateCounter++;
+            if (updateCounter == 5){
+                System.out.printf("count = %.3f\n",count);
+                error = turn_target - count;
+                System.out.printf("error = %.3f\n",error);
+                updateCounter = 0;
+            }
 
-        count=falcon_turn.getSelectedSensorPosition(0);
+        }
+        
+
+        if (count < turn_target){
+            falcon_turn.set(ControlMode.PercentOutput, 0.0);
+        }
 
         //  counts could go negative in this situation
-        error=turn_target-count;
+        //error=turn_target-count;
+
+        
 
         //  Reduce motor power as we approach target.  Clamp
         //  at 0.1 until we reach within the deadband. '5'
         //  is chosen as the deadband multiplier and may be
         //  changed with experimentation.
-        if((Math.abs(error)<5*turn_deadband) && (error<0.0)) {
-            if(turn_power>0.1)turn_power-=0.1;
+        /*if((Math.abs(error)<10*turn_deadband) && (error<0.0)) {
+            if(turn_power>0.1)turn_power-=0.05;
             falcon_turn.set(ControlMode.PercentOutput,-turn_power);
         }
 
         //  Hard stop if we are near target or have gone past
-        else if((Math.abs(error)<turn_deadband) || (error>0.0)) {
+        if((Math.abs(error)<turn_deadband) || (error>0.0)) {
             falcon_turn.set(ControlMode.PercentOutput,0.0);
         }
-        return(error);
+        return(error);*/
+        return 0;
 
     }
 
@@ -345,13 +374,15 @@ public class SwerveDrive {
         double error=0;
 
         //  First time through, get the initial position
-        if(rotate_init==1)  {
+        if(zeroInit == 1)  {
             initial_count=falcon_turn.getSelectedSensorPosition(0);
             // In this case our target should be less than the present
             // position - could in fact be negative.  The result of the
             // computation of degree counts will be positive.
             turn_target=0.0;
             rotate_init=0;
+
+            zeroInit = 0;
         }
 
         if(initial_count>0.0)  {
