@@ -24,9 +24,9 @@ public class SwerveDrive extends Robot{
     private double drive_reduce=4.0;
 
     //  Ring and pinion teeth
-    private double turn_pinion=33.0;
+    private double turn_pinion=38.0;
     private double turn_ring=80.0;
-    private double drive_pinion=33.0;
+    private double drive_pinion=38.0;
     private double drive_ring=64.0;
 
     private double wheel_diameter=4.0;
@@ -478,6 +478,14 @@ public class SwerveDrive extends Robot{
         count=falcon_drive.getSelectedSensorPosition(0);
         error=drive_target-count;
 
+        /*updateCounter++;
+
+        if (updateCounter == 5){
+            System.out.printf("\ncount = %.3f  error = %.3f\n",updateCounter, error);
+            updateCounter = 0;
+        }*/
+        
+
         //  Reduce motor power as we approach target.  Clamp
         //  at 0.1 until we reach within the deadband. '5'
         //  is chosen as the deadband multiplier and may be
@@ -488,7 +496,7 @@ public class SwerveDrive extends Robot{
         }
 
         //  Hard stop if we are near target or have gone past
-        else if((Math.abs(error)<drive_deadband) || (error<0.0)) {
+        if((Math.abs(error)<drive_deadband) || (error<0.0)) {
             falcon_drive.set(ControlMode.PercentOutput,0.0);
         }
         return(error);

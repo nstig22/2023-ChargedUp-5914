@@ -90,6 +90,7 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
+<<<<<<< Updated upstream
     //error=drive.rotateLeft(90.0);
     //System.out.printf("\nerror = %.3lf\n",error);
     drive.rotateLeft(90.0);
@@ -100,6 +101,21 @@ public class Robot extends TimedRobot {
       count = 0;
     }*/
     
+=======
+    //error=drive.rotateRight(45.0);
+    //System.out.printf("\nerror = %.3lf\n",error);
+    
+    drive.drive_init = 1;
+    error = drive.moveFwd(24.0);
+    //System.out.printf("\nerror = %.3f\n",error);
+
+    drive.updateCounter++;
+
+        if (drive.updateCounter == 5){
+            System.out.printf("\nerror = %.3f\n",error);
+            drive.updateCounter = 0;
+        }
+>>>>>>> Stashed changes
   }
 
   /** This function is called once when the robot is disabled. */
