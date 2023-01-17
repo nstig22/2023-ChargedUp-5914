@@ -1,4 +1,21 @@
-
+/////////////////////////////////////////////////////////////////////
+//  File:  SwerveDrive.java
+/////////////////////////////////////////////////////////////////////
+//
+//  Purpose:  Defines the class for the swerve drive.  Includes
+//  the mechanical parameters for the drive, e.g., two Falcon
+//  motors, various gear reduction parameters, wheel diameter,
+//  CAN addresses, etc..  Functions for turning, moving are
+//  also included.
+//
+//  Remarks:  1/12/2023:  The rotateRight() and rotateLeft()
+//  functions went through significant debugging.  Some 
+//  modification has taken place since then and needs to
+//  be retested.
+//
+//
+/////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
 package frc.robot;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -30,6 +47,8 @@ public class SwerveDrive extends Robot{
     private double drive_ring=64.0;
 
     private double wheel_diameter=4.0;
+
+    private double counts_per_degree;
 
     private Delay delay;
 
@@ -196,7 +215,6 @@ public class SwerveDrive extends Robot{
     double compute_countsDegrees(double degrees)
     {
         double dtmp;
-        double counts_per_degree;  //  encoder counts per degree 
         double motor_revs;
         
         //  To rotate 360 degrees requires 
@@ -206,6 +224,16 @@ public class SwerveDrive extends Robot{
         dtmp=counts_per_degree*degrees;
      
         return(dtmp);
+    }
+
+    double counts_perDegree()
+    {
+        double motor_revs;
+
+        motor_revs=computeFinalTurnRatio();
+        counts_per_degree=2048*motor_revs/360.0;
+
+        return(counts_per_degree);
     }
 
 
@@ -220,7 +248,7 @@ public class SwerveDrive extends Robot{
     //  Returns: The error in counts as double
     //
     //  Remarks: At this point we assume that rotating right implies
-    //  increasing counts.  This may change.
+    //  increasing counts.  
     //  Note that if called in TeleOp or Autonomous repeat
     //  calls will be made every 20msec or so.
     //
@@ -228,38 +256,50 @@ public class SwerveDrive extends Robot{
     /////////////////////////////////////////////////////////////////
     double rotateRight(double degrees)
     {
-        double count;
         double error;
 
         //  First time through, get the initial position
         if(rotate_init==1)  {
             initial_count=falcon_turn.getSelectedSensorPosition(0);
+            // In this case our target should be higher than the present
+            // position - could in fact be positive.  The result of the
+            // computation of degree counts will be positive.
             turn_target=initial_count + compute_countsDegrees(degrees);
             rotate_init=0;
+
+            System.out.printf("Initial count = %.3f\n", initial_count);
+            System.out.printf("Turn target = %.3f\n",turn_target);
         }
+        
+        if (count < turn_target){
+            falcon_turn.set(ControlMode.PercentOutput, 0.5);
 
-        //System.out.println("we are here");
-        falcon_turn.set(ControlMode.PercentOutput, turn_power);
+            delay.delay_milliseconds(20.0);
+    
+            count=falcon_turn.getSelectedSensorPosition(0);
 
-        delay.delay_milliseconds(10.0);
+            error = turn_target - count;  //  In this case should be positive
+    
+            updateCounter++;
+            if (updateCounter == 5){
+                System.out.printf("count = %.3f\n",count);
+                System.out.printf("error = %.3f\n",error);
+                updateCounter = 0;
+            }
 
-        count=falcon_turn.getSelectedSensorPosition(0);
-        error=turn_target-count;
-
-        //  Reduce motor power as we approach target.  Clamp
-        //  at 0.1 until we reach within the deadband. '5'
-        //  is chosen as the deadband multiplier and may be
-        //  changed with experimentation.
-        if((Math.abs(error)<5*turn_deadband) && (error>0.0)) {
-            if(turn_power>0.1)turn_power-=0.1;
-            falcon_turn.set(ControlMode.PercentOutput,turn_power);
         }
-
-        //  Hard stop if we are near target or have gone past
-        else if((Math.abs(error)<turn_deadband) || (error<0.0)) {
-            falcon_turn.set(ControlMode.PercentOutput,0.0);
+        
+        //  Are we within the deadband for the turn?  Have we overshot?
+        //  If either of these are true, stop the motor, read the position,
+        //  and return the error (turn_target-count)
+        if ((Math.abs(turn_target-count)<turn_deadband)||(count > turn_target)) {
+            falcon_turn.set(ControlMode.PercentOutput, 0.0);
+            delay.delay_milliseconds(20.0);
+            count=falcon_turn.getSelectedSensorPosition(0);
+            return(turn_target-count);
         }
-        return(error);
+   
+        return(0.0);
 
     }
 
@@ -268,14 +308,15 @@ public class SwerveDrive extends Robot{
     /////////////////////////////////////////////////////////////////
     //
     //  Purpose:  Rotates the swerve drive in a counter-clockwise 
-    //  direction
+    //  direction the number of degrees specified.
     //
     //  Arguments:double degrees
     //
-    //  Returns: The error in counts as double
+    //  Returns: Zero until finished in which case the error in 
+    //  counts as double
     //
     //  Remarks: At this point we assume that rotating left implies
-    //  decreasing counts.  This may change.
+    //  decreasing counts.  
     //  Note that if called in TeleOp or Autonomous repeat
     //  calls will be made every 20msec or so.
     //
@@ -283,7 +324,6 @@ public class SwerveDrive extends Robot{
     /////////////////////////////////////////////////////////////////
     double rotateLeft(double degrees)
     {
-        //double count;
         double error;
 
         //  First time through, get the initial position
@@ -296,7 +336,6 @@ public class SwerveDrive extends Robot{
             rotate_init=0;
 
             System.out.printf("Initial count = %.3f\n", initial_count);
-
             System.out.printf("Turn target = %.3f\n",turn_target);
         }
         
@@ -306,55 +345,41 @@ public class SwerveDrive extends Robot{
             delay.delay_milliseconds(20.0);
     
             count=falcon_turn.getSelectedSensorPosition(0);
+
+            error = turn_target - count;
     
             updateCounter++;
             if (updateCounter == 5){
                 System.out.printf("count = %.3f\n",count);
-                error = turn_target - count;
                 System.out.printf("error = %.3f\n",error);
                 updateCounter = 0;
             }
 
         }
         
-
-        if (count < turn_target){
+        //  Are we within the deadband for the turn?  Have we overshot?
+        //  If either of these are true, stop the motor, read the position,
+        //  and return the error (turn_target-count)
+        if ((Math.abs(turn_target-count)<turn_deadband)||(count < turn_target)) {
             falcon_turn.set(ControlMode.PercentOutput, 0.0);
+            delay.delay_milliseconds(20.0);
+            count=falcon_turn.getSelectedSensorPosition(0);
+            return(turn_target-count);
         }
-
-        //  counts could go negative in this situation
-        //error=turn_target-count;
-
-        
-
-        //  Reduce motor power as we approach target.  Clamp
-        //  at 0.1 until we reach within the deadband. '5'
-        //  is chosen as the deadband multiplier and may be
-        //  changed with experimentation.
-        /*if((Math.abs(error)<10*turn_deadband) && (error<0.0)) {
-            if(turn_power>0.1)turn_power-=0.05;
-            falcon_turn.set(ControlMode.PercentOutput,-turn_power);
-        }
-
-        //  Hard stop if we are near target or have gone past
-        if((Math.abs(error)<turn_deadband) || (error>0.0)) {
-            falcon_turn.set(ControlMode.PercentOutput,0.0);
-        }
-        return(error);*/
-        return 0;
+   
+        return(0.0);
 
     }
 
-
     /////////////////////////////////////////////////////////////////
-    //  Function:  double  return2Zero()
+    //  Function:  int return2Zero()
     /////////////////////////////////////////////////////////////////
     //
     //  Purpose:  Assuming we start the robot with the wheels 
     //  pointing straight forward, on init, we set the encoder
     //  count to zero.  All turns from that point on are 
     //  referenced to the current position with 'zero' being
-    //  the home position.  So, our target counts is zero.
+    //  the home position.  So, our target in counts is zero.
     //  If the current measured position is positive, we wish
     //  to rotate in a direction to reduce the measured count
     //  to zero.  Likewise, if negative we wish to increase the
@@ -362,16 +387,16 @@ public class SwerveDrive extends Robot{
     //
     //  Arguments:void
     //
-    //  Returns: a double representing the error
+    //  Returns: 0
     //
     //  Remarks:TBD: are the directions correct?
     //
     /////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////
-    double  return2Zero()
+    int return2Zero()
     {
-        double count;
         double error=0;
+        double degrees;
 
         //  First time through, get the initial position
         if(zeroInit == 1)  {
@@ -380,61 +405,23 @@ public class SwerveDrive extends Robot{
             // position - could in fact be negative.  The result of the
             // computation of degree counts will be positive.
             turn_target=0.0;
-            rotate_init=0;
-
+            error=turn_target-initial_count;
             zeroInit = 0;
+            rotate_init=1;
         }
+
+        degrees=error/counts_perDegree();
 
         if(initial_count>0.0)  {
         
-            falcon_turn.set(ControlMode.PercentOutput, -turn_power);
-
-            delay.delay_milliseconds(10.0);
-
-            count=falcon_turn.getSelectedSensorPosition(0);
-
-            //  counts could go negative in this situation
-            error=turn_target-count;
-
-            //  Reduce motor power as we approach target.  Clamp
-            //  at 0.1 until we reach within the deadband. '5'
-            //  is chosen as the deadband multiplier and may be
-            //  changed with experimentation.
-            if((Math.abs(error)<5*turn_deadband) && (error<0.0)) {
-                if(turn_power>0.1)turn_power-=0.1;
-                falcon_turn.set(ControlMode.PercentOutput,-turn_power);
-            }
-
-            //  Hard stop if we are near target or have gone past
-            else if((Math.abs(error)<turn_deadband) || (error>0.0)) {
-                falcon_turn.set(ControlMode.PercentOutput,0.0);
-            }
+            rotateLeft(degrees);
+            
         }  else if(initial_count<0.0)  {
            
-            falcon_turn.set(ControlMode.PercentOutput, turn_power);
-    
-            delay.delay_milliseconds(10.0);
-    
-            count=falcon_turn.getSelectedSensorPosition(0);
-            error=turn_target-count;
-    
-            //  Reduce motor power as we approach target.  Clamp
-            //  at 0.1 until we reach within the deadband. '5'
-            //  is chosen as the deadband multiplier and may be
-            //  changed with experimentation.
-            if((Math.abs(error)<5*turn_deadband) && (error>0.0)) {
-                if(turn_power>0.1)turn_power-=0.1;
-                falcon_turn.set(ControlMode.PercentOutput,turn_power);
-            }
-    
-            //  Hard stop if we are near target or have gone past
-            else if((Math.abs(error)<turn_deadband) || (error<0.0)) {
-                falcon_turn.set(ControlMode.PercentOutput,0.0);
-            }
-
+            rotateRight(degrees);
 
         }
-        return(error);
+        return(0);
 
     }
 

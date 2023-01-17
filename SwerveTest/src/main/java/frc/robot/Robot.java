@@ -1,10 +1,36 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
+/////////////////////////////////////////////////////////////////
+//  File:   Robot.java
+/////////////////////////////////////////////////////////////////
+//
+//  Purpose: This file defines the Robot class.  The purpose of 
+//  "SimpleRobot", the application name is to debug various
+//  components of a new hardware item - SwerveDrive.  This
+//  application has test vehicles for both teleOp and autonomous
+//  operation.  Autonomous is accomplished via multithreading,
+//  i.e., creation of a separate execution thread that is 
+//  "time sliced" with the main() thread.  So that instantiation
+//  of the SwerveThread class for teloOp and auto are separated,
+//  it's either one or the other.  This is accomplished by 
+//  declaring these private to Robot, and to SwerveDriveThread
+//  classes.  In Robot, the SwerveDrive class is created in
+//  teleopInit() so depending on which mode of operation is
+//  taking place it's either one or the other.  The functions
+//  in SwerveDrive and SwerveDrive thread are different.  When
+//  called in teleOp() the function is repeatedly called every
+//  20 msec and requires a different logic.  The functions in
+//  SwerveDriveThread are called once using while()
+//  loops.  Detection of "hang" is accopmplished via timers
+//  and the functions will return a specific error code that
+//  can be detected and action taken.
+//
+//  This logic may or may not be used when you create your robot
+//  software.  My task is to show you different methods and how
+//  to debug and implement various strategies.  1/14/2023 LJB
+//
+/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
 package frc.robot;
 
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -21,12 +47,19 @@ public class Robot extends TimedRobot {
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
 
-  SwerveDrive drive;
+  //  Designate as private - specifically to be used in TeleOp
+  //  In the thread class there will also be a "private" implementation
+  //  of the SwerveDrive class
+  private SwerveDrive drive;
+
   double error;
 
-  Joystick stick;
+  //  autonomous thread parameters
+static SwerveDriveThread test;
+private int init=1;
+static boolean thread_is_active=false;
+private int auto_update=0;
 
-  int count = 0;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -38,8 +71,8 @@ public class Robot extends TimedRobot {
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
 
-    drive=new SwerveDrive();
-    stick=new Joystick(0);
+    //  Moved this allocation to TeleopInit()
+    //drive=new SwerveDrive();
   }
 
   /**
@@ -72,24 +105,42 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
-    switch (m_autoSelected) {
-      case kCustomAuto:
-        // Put custom auto code here
-        break;
-      case kDefaultAuto:
-      default:
-        // Put default auto code here
-        break;
-    }
-  }
 
+    //  Need an 'init' variable.  We only launch the thread
+  //  once.  It runs in parallel with autonomousPeriodic()
+  //  which is called by the timed Robot app aproximately
+  //  every 20msec.
+  if(init==1)  {
+
+    //  Start the thread
+    test=new SwerveDriveThread("SwerveDriveTest");
+  
+    init=0;
+
+      
+  } 
+  if(auto_update==20)  {
+    System.out.println("Thread active = " + thread_is_active);
+    System.out.println("SwerveDriveTest" + test.isactive);
+       
+    auto_update=0;
+  }
+  auto_update++;
+
+
+}
   /** This function is called once when teleop is enabled. */
   @Override
-  public void teleopInit() {}
+  public void teleopInit() {
+
+    drive=new SwerveDrive();
+
+  }
 
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
+<<<<<<< HEAD
 <<<<<<< Updated upstream
     //error=drive.rotateLeft(90.0);
     //System.out.printf("\nerror = %.3lf\n",error);
@@ -116,12 +167,16 @@ public class Robot extends TimedRobot {
             drive.updateCounter = 0;
         }
 >>>>>>> Stashed changes
+=======
+    error=drive.rotateRight(45.0);
+    System.out.printf("\nerror = %.3lf\n",error);
+>>>>>>> NewTesting
   }
 
   /** This function is called once when the robot is disabled. */
   @Override
   public void disabledInit() {}
- 
+
   /** This function is called periodically when disabled. */
   @Override
   public void disabledPeriodic() {}

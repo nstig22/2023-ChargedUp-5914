@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> NewTesting
 /////////////////////////////////////////////////////////////////
 //  File:   SwerveDriveThread.java
 /////////////////////////////////////////////////////////////////
@@ -66,7 +70,11 @@ class SwerveDriveThread implements Runnable {
 		delay = new Delay();
 
         //  Start the timer
+<<<<<<< HEAD
 		//start_time=System.nanoTime();
+=======
+		start_time=System.nanoTime();
+>>>>>>> NewTesting
         isactive=1;
         Robot.thread_is_active=true;
 		t.start(); // Start the thread
@@ -90,19 +98,30 @@ class SwerveDriveThread implements Runnable {
             //  We need to reset our "init" flag.  The 
             //  previous function call had set it to zero.
             drive.rotate_init=1;
+<<<<<<< HEAD
             turnLeft(90.0);
+=======
+            turnLeft(180.0);
+>>>>>>> NewTesting
 
             delay.delay_milliseconds(1000.0);
 
             drive.rotate_init=1;
+<<<<<<< HEAD
             turnLeft(270.0);  
+=======
+            turnRight(270.0);  
+>>>>>>> NewTesting
             
             delay.delay_milliseconds(1000.0);
             
             drive.rotate_init=1;
             return2Zero();
+<<<<<<< HEAD
 
             drive.rotate_init=1;
+=======
+>>>>>>> NewTesting
                     
             //  interrupt (terminate)  the thread 
             t.interrupt();
@@ -180,7 +199,10 @@ class SwerveDriveThread implements Runnable {
 
             System.out.printf("Initial count = %.3f\n", drive.initial_count);
             System.out.printf("Turn target = %.3f\n",drive.turn_target);
+<<<<<<< HEAD
             start_time=System.nanoTime();
+=======
+>>>>>>> NewTesting
         }
         
         while (drive.count < (drive.turn_target+drive.turn_deadband)){
@@ -208,7 +230,11 @@ class SwerveDriveThread implements Runnable {
                 stop();
                 break;
             }
+<<<<<<< HEAD
             
+=======
+
+>>>>>>> NewTesting
         }
         
         //  Are we within the deadband for the turn?  Have we overshot?
@@ -243,7 +269,10 @@ class SwerveDriveThread implements Runnable {
 
             System.out.printf("Initial count = %.3f\n", drive.initial_count);
             System.out.printf("Turn target = %.3f\n",drive.turn_target);
+<<<<<<< HEAD
             start_time=System.nanoTime();
+=======
+>>>>>>> NewTesting
         }
         
         while (drive.count > drive.turn_target){
@@ -335,14 +364,22 @@ class SwerveDriveThread implements Runnable {
 
         degrees=error/drive.counts_perDegree();
 
+<<<<<<< HEAD
         if(drive.initial_count<0.0)  {
+=======
+        if(drive.initial_count>0.0)  {
+>>>>>>> NewTesting
         
             return_val=turnLeft(degrees);
             if(return_val==999.999)  {
                 System.out.printf("Timeout: Return of turnLeft() = %.3lf",return_val);
             }
             
+<<<<<<< HEAD
         }  else if(drive.initial_count>0.0)  {
+=======
+        }  else if(drive.initial_count<0.0)  {
+>>>>>>> NewTesting
            
             return_val=turnRight(degrees);
             if(return_val==-999.999)  {
