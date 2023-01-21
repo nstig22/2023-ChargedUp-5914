@@ -1,4 +1,3 @@
-
 /////////////////////////////////////////////////////////////////
 //  File:   SwerveDriveThread.java
 /////////////////////////////////////////////////////////////////
@@ -26,6 +25,9 @@
 //  Robot.java version is also declared private to
 //  Robot.java.  Don't exactly know how this will work out.
 //
+//  1/18/2023:  Functions are working.  Note: too many printouts
+//  will make operation inconsistant.
+//
 /////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////
 
@@ -34,19 +36,22 @@ package frc.robot;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+
 
 class SwerveDriveThread implements Runnable {
 
     private SwerveDrive drive;
+    private ADXRS450_Gyro driveGyro;
     
     //  Timing parame int  
     volatile int isactive;
 
-    private long start_time=0;
-    private long end_time=0;
-    private double elapsed_time=0.0;
+    private long thread_start_time=0;
+    private long thread_end_time=0;
+    private double thread_elapsed_time=0.0;
     private int updateCounter=0;
-
+    
    // private double duration=3000;  //  duration in msec
   	
 	String name;
@@ -58,6 +63,7 @@ class SwerveDriveThread implements Runnable {
 	SwerveDriveThread(String threadname) {
 
         drive = new SwerveDrive();
+        driveGyro = new ADXRS450_Gyro();
         		
 		name = threadname;
 		t = new Thread(this, name);
@@ -66,8 +72,16 @@ class SwerveDriveThread implements Runnable {
     
 		delay = new Delay();
 
+        driveGyro.calibrate();
+
+        driveGyro.reset();
+
+        double angle = driveGyro.getAngle();
+
+        System.out.printf("\ndegrees = %.3f\n", angle);
+
         //  Start the timer
-		start_time=System.nanoTime();
+		//start_time=System.nanoTime();
         isactive=1;
         Robot.thread_is_active=true;
 		t.start(); // Start the thread
@@ -84,24 +98,66 @@ class SwerveDriveThread implements Runnable {
        //  constructor and zeroed if we successfully interrupt the thread.
        while(isactive==1) {
 
-            turnRight(90.0);    
+        turnRight(90, 0.2);
 
-            delay.delay_milliseconds(1000.0);
+        /*driveFwd(24.0);
 
-            //  We need to reset our "init" flag.  The 
-            //  previous function call had set it to zero.
-            drive.rotate_init=1;
-            turnLeft(180.0);
+        delay.delay_milliseconds(100.0);
+       
+        turnRight(90.0);
 
-            delay.delay_milliseconds(1000.0);
+        delay.delay_milliseconds(100.0);
 
-            drive.rotate_init=1;
-            turnRight(270.0);  
+        driveFwd(34.5);
+
+        delay.delay_milliseconds(100.0);
+
+        return2Zero();
+
+        delay.delay_milliseconds(100.0);
+
+        driveFwd(24.0);
+
+        delay.delay_milliseconds(100.0);
+
+        turnLeft(90.0);
+
+        delay.delay_milliseconds(100.0);
+
+        driveFwd(34.5);
+
+        delay.delay_milliseconds(100.0);
+
+        return2Zero();
+
+        delay.delay_milliseconds(100.0);
+
+        driveFwd(24.0);
+
+        //turnLeft(180.0);  
+
+            //delay.delay_milliseconds(100.0);*/
+
             
-            delay.delay_milliseconds(1000.0);
+
+            /*delay.delay_milliseconds(100.0);
+
+            turnLeft(45.0);
+
+            delay.delay_milliseconds(100.0);
+
+            driveReverse(24.0);
+
+            delay.delay_milliseconds(100.0);
+
+            turnRight(90.0);
+
+            delay.delay_milliseconds(100.0);
             
-            drive.rotate_init=1;
-            return2Zero();
+            return2Zero();*/
+            
+             
+         
                     
             //  interrupt (terminate)  the thread 
             t.interrupt();
@@ -127,10 +183,10 @@ class SwerveDriveThread implements Runnable {
 
             //  Output time to reach this point.  Should be stability
             //  time plus duration.
-            end_time=System.nanoTime();
-            elapsed_time=end_time-start_time;
-            elapsed_time*=1e-6;  //  convert to milliseconds
-            System.out.printf("Elapsed time = %.3 msec",elapsed_time);
+            thread_end_time=System.nanoTime();
+            thread_elapsed_time=thread_end_time-thread_start_time;
+            thread_elapsed_time*=1e-6;  //  convert to milliseconds
+            System.out.printf("Thread Elapsed time = %.3 msec",thread_elapsed_time);
 
             //  Ok, lets create an escape hatch in the event that the
             //  thread
@@ -161,40 +217,52 @@ class SwerveDriveThread implements Runnable {
     //  and incorporates a while() loop.  Unlike the functions
     //  used in teleOP() this function gets called once.
     //
+    //  1/18/23:  A thought:  when this function is called,
+    //  it is executed with one pass.  There is no need for
+    //  an "init" variable.
+    //
     //
     /////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////
     double turnRight(double degrees)
     {
+        boolean debug = false;
+
+        double count=0;
+        double target=0;
+
+        long start_time=0;
+        long end_time=0;
+        double elapsed_time=0.0;
         double error;
 
-        //  First time through, get the initial position
-        if(drive.rotate_init==1)  {
-            drive.initial_count=drive.falcon_turn.getSelectedSensorPosition(0);
-            // In this case our target should be higher than the present
-            // position - could in fact be positive.  The result of the
-            // computation of degree counts will be positive.
-            drive.turn_target=drive.initial_count + drive.compute_countsDegrees(degrees);
-            drive.rotate_init=0;
-
-            System.out.printf("Initial count = %.3f\n", drive.initial_count);
-            System.out.printf("Turn target = %.3f\n",drive.turn_target);
-        }
+        //  Determine position, compute target counts
+        count=drive.falcon_turn.getSelectedSensorPosition(0);           
+        target=count+drive.compute_countsDegrees(degrees);                    
         
-        while (drive.count < (drive.turn_target+drive.turn_deadband)){
-            drive.falcon_turn.set(ControlMode.PercentOutput, 0.5);
+        
+        if(debug==true) {
+            System.out.printf("Right Turn target = %.3f  count = %.3f\n",target,count);
+        }
+
+        start_time=System.nanoTime();   
+       
+        while (count < (target+drive.turn_deadband)){
+            drive.falcon_turn.set(ControlMode.PercentOutput, 0.2);
 
             delay.delay_milliseconds(20.0);
     
-            drive.count=drive.falcon_turn.getSelectedSensorPosition(0);
+            count=drive.falcon_turn.getSelectedSensorPosition(0);
 
-            error = drive.turn_target - drive.count;  //  In this case should be positive
+            error = target - count;  //  In this case should be positive
     
-            updateCounter++;
-            if (updateCounter == 5){
-                System.out.printf("count = %.3f\n",drive.count);
-                System.out.printf("error = %.3f\n",error);
-                updateCounter = 0;
+            if(debug==true)  {
+                updateCounter++;
+                if (updateCounter == 10){
+                    System.out.printf("count = %.3f\n",count);
+                    System.out.printf("error = %.3f\n",error);
+                    updateCounter = 0;
+                }
             }
 
             //  Escape hatch
@@ -206,17 +274,17 @@ class SwerveDriveThread implements Runnable {
                 stop();
                 break;
             }
-
+            
         }
         
         //  Are we within the deadband for the turn?  Have we overshot?
         //  If either of these are true, stop the motor, read the position,
         //  and return the error (turn_target-count)
-        if ((Math.abs(drive.turn_target-drive.count)<drive.turn_deadband)||(drive.count > drive.turn_target)) {
+        if ((Math.abs(target-count)<drive.turn_deadband)||(count > target)) {
             stop();
-            drive.count=drive.falcon_turn.getSelectedSensorPosition(0);
+            count=drive.falcon_turn.getSelectedSensorPosition(0);
             updateCounter=0;
-            return(drive.turn_target-drive.count);
+            return(target-count);
         }
    
         //  If we have reached this point it would indicate an error of some sort.  Either
@@ -226,39 +294,101 @@ class SwerveDriveThread implements Runnable {
 
     }
 
+    //Function to turn right using the gyro
+    void turnRight(double degrees, double speed){
+        double angle = driveGyro.getAngle();
+        //double target = angle + degrees;
+        int count = 0;
+
+        driveGyro.reset();
+
+        System.out.printf("\nangle = %.3f", driveGyro.getAngle());
+
+        /*while (true){
+            angle = driveGyro.getAngle();
+
+            delay.delay_milliseconds(20.0);
+
+            if (count == 20){
+                System.out.printf("\nangle = %.3f\n", angle);
+                count = 0;
+            }
+
+            count++;
+        }*/
+
+        turnRight(45);
+
+        while (angle < 90){
+            drive.falcon_drive.set(ControlMode.PercentOutput, 0.1);
+
+            delay.delay_milliseconds(20.0);
+
+            angle = driveGyro.getAngle();
+
+            delay.delay_milliseconds(20.0);
+
+            if (count == 5){
+                System.out.printf("\nangle = %.3f\n", angle);
+                count = 0;
+            }
+
+            count++;
+        }
+
+        delay.delay_milliseconds(200.0);
+
+        return2Zero();
+
+        //return 0;
+    }
+
     double turnLeft(double degrees)
     {
+        boolean debug=false;
+
+        double count=0;
+        double target=0;
+        long start_time=0;
+        long end_time=0;
+        double elapsed_time=0.0;
         double error;
 
-        //  First time through, get the initial position
-        if(drive.rotate_init==1)  {
-            drive.initial_count=drive.falcon_turn.getSelectedSensorPosition(0);
-            // In this case our target should be less than the present
-            // position - could in fact be negative.  The result of the
-            // computation of degree counts will be positive.
-            drive.turn_target=drive.initial_count - drive.compute_countsDegrees(degrees);
-            drive.rotate_init=0;
-
-            System.out.printf("Initial count = %.3f\n", drive.initial_count);
-            System.out.printf("Turn target = %.3f\n",drive.turn_target);
-        }
+        // Get the initial position, compute the number of counts
+               
+        count=drive.falcon_turn.getSelectedSensorPosition(0);           
+        target=count-drive.compute_countsDegrees(degrees);  
         
-        while (drive.count > drive.turn_target){
-            drive.falcon_turn.set(ControlMode.PercentOutput, -0.5);
+        updateCounter=0;
+
+        start_time=System.nanoTime();
+        
+        if(debug==true)  {
+            System.out.printf("Left Turn target = %.3f  count =%.3f\n",target,count); 
+        }       
+        
+        while (count > target){
+            drive.falcon_turn.set(ControlMode.PercentOutput, -0.2);
 
             delay.delay_milliseconds(20.0);
     
-            drive.count=drive.falcon_turn.getSelectedSensorPosition(0);
+            count=drive.falcon_turn.getSelectedSensorPosition(0);
 
-            error = drive.turn_target - drive.count;
+            error = target - count;
     
-            updateCounter++;
-            if (updateCounter == 5){
-                System.out.printf("count = %.3f\n",drive.count);
-                System.out.printf("error = %.3f\n",error);
-                updateCounter = 0;
+            if(debug==true)  {
+                updateCounter++;
+                if (updateCounter == 10){
+                    System.out.printf("count = %.3f\n",count);
+                    System.out.printf("error = %.3f\n",error);
+                    updateCounter = 0;
+                }
             }
 
+             //  Escape hatch
+             end_time=System.nanoTime();
+             elapsed_time=end_time-start_time;
+             elapsed_time*=1e-6;  //  convert to milliseconds
             if(elapsed_time>2000.0)  {
                 System.out.printf("Elapsed Time within turnRight() has exceeded limits.");
                 stop();
@@ -270,11 +400,11 @@ class SwerveDriveThread implements Runnable {
         //  Are we within the deadband for the turn?  Have we overshot?
         //  If either of these are true, stop the motor, read the position,
         //  and return the error (turn_target-count)
-        if ((Math.abs(drive.turn_target-drive.count)<drive.turn_deadband)||(drive.count < drive.turn_target)) {
+        if ((Math.abs(target-count)<drive.turn_deadband)||(count < target)) {
             stop();
-            drive.count=drive.falcon_turn.getSelectedSensorPosition(0);
+            count=drive.falcon_turn.getSelectedSensorPosition(0);
             updateCounter=0;
-            return(drive.turn_target-drive.count);
+            return(target-count);
         }
    
         //  If we have reached this point it would indicate an error of some sort.  Either
@@ -314,40 +444,178 @@ class SwerveDriveThread implements Runnable {
     /////////////////////////////////////////////////////////////////
     double return2Zero()
     {
-        double error=0;
+        double count=0;
         double degrees;
         double return_val;
 
-        //  First time through, get the initial position
-        if(drive.zeroInit == 1)  {
-            drive.initial_count=drive.falcon_turn.getSelectedSensorPosition(0);
-            // In this case our target should be less than the present
-            // position - could in fact be negative.  The result of the
-            // computation of degree counts will be positive.
-            drive.turn_target=0.0;
-            error=drive.turn_target-drive.initial_count;
-            drive.zeroInit = 0;
-            drive.rotate_init=1;
-        }
+        //  Get the position        
+        count=drive.falcon_turn.getSelectedSensorPosition(0); 
+        delay.delay_milliseconds(20);      
+            
+        System.out.printf("\nInitial Count = %.3f\n",count);
+       
+        degrees=count/drive.counts_perDegree();
 
-        degrees=error/drive.counts_perDegree();
+       System.out.printf("\nDegrees=%.3f\n",degrees);
 
-        if(drive.initial_count>0.0)  {
+        if(count>0.0)  {
         
-            return_val=turnLeft(degrees);
+            return_val=turnLeft(Math.abs(degrees));
             if(return_val==999.999)  {
                 System.out.printf("Timeout: Return of turnLeft() = %.3lf",return_val);
             }
             
-        }  else if(drive.initial_count<0.0)  {
+        }  else if(count<0.0)  {
            
-            return_val=turnRight(degrees);
+            return_val=turnRight(Math.abs(degrees));
             if(return_val==-999.999)  {
                 System.out.printf("Timeout: Return of turnRight() = %.3lf",return_val);
             }
 
         }
         return(0);
+
+    }
+
+
+    double driveFwd(double inches)
+    {
+        boolean debug=false;
+        double count=0;
+        double target=0;
+
+        long start_time=0;
+        long end_time=0;
+        double elapsed_time=0.0;
+        double error;
+        
+        //  Get the initial position, compute the number of counts
+        count=drive.falcon_drive.getSelectedSensorPosition(0);           
+        target=count+drive.compute_countsDistance(inches);  
+        updateCounter=0;    
+
+        start_time=System.nanoTime();
+
+        if(debug==true)  {
+            System.out.printf("Fwd Drive target = %.3f count = %.3f\n",drive.drive_target,drive.count);
+        }
+
+             
+        while (count < (target+drive.drive_deadband)){
+            drive.falcon_drive.set(ControlMode.PercentOutput, 0.2);
+
+            delay.delay_milliseconds(20.0);
+    
+            count=drive.falcon_drive.getSelectedSensorPosition(0);
+
+            error = target - count;  //  In this case should be positive
+            if(debug==true)  {
+                updateCounter++;
+                if (updateCounter == 10){
+                    System.out.printf("count = %.3f\n",count);
+                    System.out.printf("error = %.3f\n",error);
+                    updateCounter = 0;
+                }
+            }
+
+            //  Escape hatch
+            end_time=System.nanoTime();
+            elapsed_time=end_time-start_time;
+            elapsed_time*=1e-6;  //  convert to milliseconds
+            if(elapsed_time>2000.0)  {
+                System.out.printf("Elapsed Time within driveFwd() has exceeded limits.");
+                stop();
+                break;
+            }
+            
+        }
+        
+        //  Are we within the deadband for the turn?  Have we overshot?
+        //  If either of these are true, stop the motor, read the position,
+        //  and return the error (turn_target-count)
+        if ((Math.abs(target-count)<drive.drive_deadband)||(count > target)) {
+            stop();
+            count=drive.falcon_drive.getSelectedSensorPosition(0);
+            delay.delay_milliseconds(20);
+            updateCounter=0;
+            return(target-count);
+        }
+   
+        //  If we have reached this point it would indicate an error of some sort.  Either
+        //  we exited the while loop because of a hang or we failed to converge within the
+        //  deadband.
+        return(999.999);
+
+    }
+
+    double driveReverse(double inches)
+    {
+        boolean debug=false;
+
+        double count=0;
+        double target=0;
+        long start_time=0;
+        long end_time=0;
+        double elapsed_time=0.0;
+        double error;
+
+        // Get the initial position, compute the number of counts
+        count=drive.falcon_drive.getSelectedSensorPosition(0);           
+        target=count-drive.compute_countsDistance(inches);         
+        
+        if(debug==true)  {
+            System.out.printf("RevDrive target = %.3f count = %.3f\n",target,count); 
+        }  
+        
+        updateCounter=0;
+
+        start_time=System.nanoTime();
+                
+        while (count > target){
+            drive.falcon_drive.set(ControlMode.PercentOutput, -0.2);
+
+            delay.delay_milliseconds(20.0);
+    
+            count=drive.falcon_drive.getSelectedSensorPosition(0);
+
+            error = target - count;
+    
+            if(debug==true)  {
+                updateCounter++;
+                if (updateCounter == 10){
+                    System.out.printf("count = %.3f\n",drive.count);
+                    System.out.printf("error = %.3f\n",error);
+                    updateCounter = 0;
+                }
+            }
+
+             //  Escape hatch
+             end_time=System.nanoTime();
+             elapsed_time=end_time-start_time;
+             elapsed_time*=1e-6;  //  convert to milliseconds
+            if(elapsed_time>2000.0)  {
+                System.out.printf("Elapsed Time within turnRight() has exceeded limits.");
+                stop();
+                break;
+            }
+
+        }
+        
+        //  Are we within the deadband for the turn?  Have we overshot?
+        //  If either of these are true, stop the motor, read the position,
+        //  and return the error (turn_target-count)
+        if ((Math.abs(target-count)<drive.drive_deadband)||(count < target)) {
+            stop();
+            count=drive.falcon_drive.getSelectedSensorPosition(0);
+            updateCounter=0;
+            return(target-count);
+        }
+   
+        //  If we have reached this point it would indicate an error of some sort.  Either
+        //  we exited the while loop because of a hang or we failed to converge within the
+        //  deadband.  Note that the return value here is negative - just so we might
+        //  be able to tell which function timed out.
+        return(-999.999);
 
     }
    

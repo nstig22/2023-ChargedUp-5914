@@ -13,6 +13,10 @@
 //  modification has taken place since then and needs to
 //  be retested.
 //
+//  1/16/2023:  Need an absolute encoder on the turn motor.  In
+//  matches it is needed to set the turning motor in the "zero"
+//  position.
+//
 //
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
@@ -28,7 +32,8 @@ public class SwerveDrive extends Robot{
     //Debug code
     int zeroInit = 1;
     int updateCounter = 0;
-    double count = 0;
+    double count;
+    boolean motion_complete;
 
     private int turn_ID=7;
     private int drive_ID=6;
@@ -41,9 +46,9 @@ public class SwerveDrive extends Robot{
     private double drive_reduce=4.0;
 
     //  Ring and pinion teeth
-    private double turn_pinion=33.0;
+    private double turn_pinion=38.0;
     private double turn_ring=80.0;
-    private double drive_pinion=33.0;
+    private double drive_pinion=38.0;
     private double drive_ring=64.0;
 
     private double wheel_diameter=4.0;
@@ -62,7 +67,7 @@ public class SwerveDrive extends Robot{
     double turn_deadband=100.0;
 
     double drive_target;
-    double drive_power=0.5;
+    double drive_power=0.2;
     double drive_deadband=1000.0;  //  ~ 1/2"
 
     //  Default Constructor
@@ -76,7 +81,8 @@ public class SwerveDrive extends Robot{
         falcon_turn.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor,0, 50);
 
         falcon_drive = new WPI_TalonFX(drive_ID);   
-        falcon_drive.setNeutralMode(NeutralMode.Coast);
+        falcon_drive.setNeutralMode(NeutralMode.Brake);
+        falcon_drive.setInverted(false);
         falcon_drive.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor,0, 50);
 
          //  Zero encoders
@@ -95,11 +101,13 @@ public class SwerveDrive extends Robot{
         drive_ID=drive_id;
 
         falcon_turn = new WPI_TalonFX(turn_id);   
-        falcon_turn.setNeutralMode(NeutralMode.Coast);
+        falcon_turn.setNeutralMode(NeutralMode.Brake);
+        falcon_turn.setInverted(true);
         falcon_turn.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor,0, 50);
 
         falcon_drive = new WPI_TalonFX(drive_id);   
-        falcon_drive.setNeutralMode(NeutralMode.Coast);
+        falcon_drive.setNeutralMode(NeutralMode.Brake);
+        falcon_drive.setInverted(false);
         falcon_drive.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor,0, 50);
 
          //  Zero encoders
@@ -248,59 +256,61 @@ public class SwerveDrive extends Robot{
     //  Returns: The error in counts as double
     //
     //  Remarks: At this point we assume that rotating right implies
-    //  increasing counts.  
-    //  Note that if called in TeleOp or Autonomous repeat
-    //  calls will be made every 20msec or so.
+    //  increasing counts.  It is intended that this function is
+    //  called multiple times in either teleop or auto modes.
+    //  
     //
     /////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////
     double rotateRight(double degrees)
     {
-        double error;
+        double error=0.0;
 
-        //  First time through, get the initial position
+        //  First time through, get the initial position.  We compute
+        //  the number of counts associated with the degrees and
+        //  compute our target count.  If we have our motor inversion
+        //  state correctly set we add the computed counts to the
+        //  present position to rotate the drive clockwise
         if(rotate_init==1)  {
-            initial_count=falcon_turn.getSelectedSensorPosition(0);
-            // In this case our target should be higher than the present
-            // position - could in fact be positive.  The result of the
-            // computation of degree counts will be positive.
-            turn_target=initial_count + compute_countsDegrees(degrees);
-            rotate_init=0;
-
-            System.out.printf("Initial count = %.3f\n", initial_count);
+            turn_target=compute_countsDegrees(degrees);
             System.out.printf("Turn target = %.3f\n",turn_target);
+            updateCounter=0;
+            rotate_init=0;            
         }
+
+        if(motion_complete==false)  {      
+            //  Set the motor in motion, wait a bit and then read the encoder
+            //  and compute the error.
+            if (count < turn_target){
+                falcon_turn.set(ControlMode.PercentOutput, 0.5);
+
+                delay.delay_milliseconds(20.0);
         
-        if (count < turn_target){
-            falcon_turn.set(ControlMode.PercentOutput, 0.5);
+                count=falcon_turn.getSelectedSensorPosition(0);
 
-            delay.delay_milliseconds(20.0);
-    
-            count=falcon_turn.getSelectedSensorPosition(0);
+                error = turn_target - count;  //  In this case should be positive
+            }
+            
+            //  Are we within the deadband for the turn?  Have we overshot?
+            //  If either of these are true, stop the motor.  We need to
+            //  set a flag that the motion has been completed or we will
+            //  continue to drive the motors on calls after we have
+            //  satisfied this condition.  Since "error" has function
+            //  scope it is set to zero every time this function is called
+            if ((Math.abs(error)<turn_deadband)||(error<0.0)) {
+                falcon_turn.set(ControlMode.PercentOutput, 0.0);
+                motion_complete=true; 
 
-            error = turn_target - count;  //  In this case should be positive
-    
+            }  
+
             updateCounter++;
-            if (updateCounter == 5){
-                System.out.printf("count = %.3f\n",count);
-                System.out.printf("error = %.3f\n",error);
+            if (updateCounter == 2){
+                System.out.printf("\ncount = %.3f  error = %.3f\n",count,error);
                 updateCounter = 0;
             }
-
-        }
-        
-        //  Are we within the deadband for the turn?  Have we overshot?
-        //  If either of these are true, stop the motor, read the position,
-        //  and return the error (turn_target-count)
-        if ((Math.abs(turn_target-count)<turn_deadband)||(count > turn_target)) {
-            falcon_turn.set(ControlMode.PercentOutput, 0.0);
-            delay.delay_milliseconds(20.0);
-            count=falcon_turn.getSelectedSensorPosition(0);
-            return(turn_target-count);
-        }
-   
-        return(0.0);
-
+        }  //  if(motion_complete==false)
+        return(error);
+  
     }
 
     /////////////////////////////////////////////////////////////////
@@ -312,62 +322,61 @@ public class SwerveDrive extends Robot{
     //
     //  Arguments:double degrees
     //
-    //  Returns: Zero until finished in which case the error in 
-    //  counts as double
+    //  Returns: The error in  counts as double
     //
     //  Remarks: At this point we assume that rotating left implies
     //  decreasing counts.  
     //  Note that if called in TeleOp or Autonomous repeat
-    //  calls will be made every 20msec or so.
+    //  calls are made every 20msec or so.
     //
     /////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////
     double rotateLeft(double degrees)
     {
-        double error;
+        double error=0.0;
 
-        //  First time through, get the initial position
+        //  We compute the number of counts associated with the degrees and
+        //  compute our target count.  If we have our motor inversion
+        //  state correctly set we subtract the computed counts from the
+        //  present position to rotate the drive counter-clockwise
         if(rotate_init==1)  {
-            initial_count=falcon_turn.getSelectedSensorPosition(0);
-            // In this case our target should be less than the present
-            // position - could in fact be negative.  The result of the
-            // computation of degree counts will be positive.
-            turn_target=initial_count - compute_countsDegrees(degrees);
-            rotate_init=0;
-
-            System.out.printf("Initial count = %.3f\n", initial_count);
+            turn_target=compute_countsDegrees(degrees);
+            turn_target*=-1.0;
             System.out.printf("Turn target = %.3f\n",turn_target);
+            updateCounter=0;
+            rotate_init=0;            
         }
+
+        if(motion_complete==false)  {     
+            //  Set the motor in motion, wait a bit and then read the encoder
+            //  and compute the error.  We keep driving the motor as long
+            //  as the measured encoder counts are greater than the target
+            //  value.
+            if (count > turn_target)  {
+                falcon_turn.set(ControlMode.PercentOutput, -0.5);
+
+                delay.delay_milliseconds(20.0);
         
-        if (count > turn_target){
-            falcon_turn.set(ControlMode.PercentOutput, -0.5);
-
-            delay.delay_milliseconds(20.0);
-    
-            count=falcon_turn.getSelectedSensorPosition(0);
-
-            error = turn_target - count;
-    
-            updateCounter++;
-            if (updateCounter == 5){
-                System.out.printf("count = %.3f\n",count);
-                System.out.printf("error = %.3f\n",error);
-                updateCounter = 0;
+                count=falcon_turn.getSelectedSensorPosition(0);
+                //  Compute the error.  In this case it should be negative.
+                error = turn_target - count; 
+            }
+            
+            //  Are we within the deadband for the turn?  Have we overshot?
+            //  If either of these are true, stop the motor.
+            if ((Math.abs(error)<turn_deadband)||(error>0.0)) {
+                falcon_turn.set(ControlMode.PercentOutput, 0.0);
+                motion_complete=true;
             }
 
-        }
-        
-        //  Are we within the deadband for the turn?  Have we overshot?
-        //  If either of these are true, stop the motor, read the position,
-        //  and return the error (turn_target-count)
-        if ((Math.abs(turn_target-count)<turn_deadband)||(count < turn_target)) {
-            falcon_turn.set(ControlMode.PercentOutput, 0.0);
-            delay.delay_milliseconds(20.0);
-            count=falcon_turn.getSelectedSensorPosition(0);
-            return(turn_target-count);
-        }
+            updateCounter++;
+            if (updateCounter == 2){
+                System.out.printf("\ncount = %.3f  error = %.3f\n",count,error);
+                updateCounter = 0;
+            }
+        }  //  if(motion_complete==false)
    
-        return(0.0);
+        return(error);
 
     }
 
@@ -389,7 +398,9 @@ public class SwerveDrive extends Robot{
     //
     //  Returns: 0
     //
-    //  Remarks:TBD: are the directions correct?
+    //  Remarks:  This function does not provide benefit unless we
+    //  started the robot with it's turning wheel pointed straight
+    //  forward.  This is a selling point for an absolute encoder.
     //
     /////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////
@@ -406,11 +417,13 @@ public class SwerveDrive extends Robot{
             // computation of degree counts will be positive.
             turn_target=0.0;
             error=turn_target-initial_count;
+            System.out.printf("initial_count = %.3f  error = %.3f\n",initial_count,error);
             zeroInit = 0;
             rotate_init=1;
         }
 
         degrees=error/counts_perDegree();
+        motion_complete=false;
 
         if(initial_count>0.0)  {
         
@@ -443,40 +456,46 @@ public class SwerveDrive extends Robot{
     //
     //  Note that movement is referenced to the current position.
     //
+    //  1/17/2023:  Interesting observation.  Although in the
+    //  init phase we set the count to the initial position once
+    //  we turn on the motor it would appear that the count begins
+    //  at zero.
+    //
     /////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////
     double moveFwd(double inches)
     {
-        double initial_count;
-        double count;
-        double error;
+        double error=0;
 
-        //  First time through, get the initial position
+       
         if(drive_init==1)  {
-            initial_count=falcon_drive.getSelectedSensorPosition(0);
-            drive_target=initial_count +  compute_countsDistance(inches);
+            drive_target=compute_countsDistance(inches);        
+            System.out.printf("drive_target = %.3f\n",drive_target);
             drive_init=0;
+            updateCounter=0;
+            motion_complete=false;
         }
 
-        falcon_drive.set(ControlMode.PercentOutput, drive_power);
+        
+        if(motion_complete==false)  {
+            // Turn on the drive motor 
+            falcon_drive.set(ControlMode.PercentOutput, drive_power);
+            delay.delay_milliseconds(25.0);
 
-        delay.delay_milliseconds(10.0);
+            count=falcon_drive.getSelectedSensorPosition(0);
+            error=drive_target-count;
 
-        count=falcon_drive.getSelectedSensorPosition(0);
-        error=drive_target-count;
+            //  Hard stop if we are near target or have gone past
+            if((Math.abs(error)<drive_deadband) || (error<0.0)) {
+                falcon_drive.set(ControlMode.PercentOutput,0.0);
+                motion_complete=true;
+            }
 
-        //  Reduce motor power as we approach target.  Clamp
-        //  at 0.1 until we reach within the deadband. '5'
-        //  is chosen as the deadband multiplier and may be
-        //  changed with experimentation.
-        if((Math.abs(error)<5*drive_deadband) && (error>0.0)) {
-            if(drive_power>0.1)drive_power-=0.1;
-            falcon_drive.set(ControlMode.PercentOutput,drive_power);
-        }
-
-        //  Hard stop if we are near target or have gone past
-        else if((Math.abs(error)<drive_deadband) || (error<0.0)) {
-            falcon_drive.set(ControlMode.PercentOutput,0.0);
+            updateCounter++;
+            if (updateCounter == 5){
+                System.out.printf("\ncount = %.3f  error = %.3f\n",count,error);
+                updateCounter = 0;
+            }
         }
         return(error);
 
@@ -506,36 +525,37 @@ public class SwerveDrive extends Robot{
     /////////////////////////////////////////////////////////////////
     double moveReverse(double inches)
     {
-        double initial_count;
-        double count;
-        double error;
+        double error=0;
 
-        //  First time through, get the initial position
         if(drive_init==1)  {
-            initial_count=falcon_drive.getSelectedSensorPosition(0);
-            drive_target=initial_count -  compute_countsDistance(inches);
+            drive_target=compute_countsDistance(inches); 
+            drive_target*=-1.0;       
+            System.out.printf("drive_target = %.3f\n",drive_target);
             drive_init=0;
+            updateCounter=0;
+            motion_complete=false;
         }
 
-        falcon_drive.set(ControlMode.PercentOutput, -drive_power);
+        if(motion_complete==false)  {
 
-        delay.delay_milliseconds(10.0);
+            falcon_drive.set(ControlMode.PercentOutput, -drive_power);
 
-        count=falcon_drive.getSelectedSensorPosition(0);
-        error=drive_target-count;
+            delay.delay_milliseconds(10.0);
 
-        //  Reduce motor power as we approach target.  Clamp
-        //  at 0.1 until we reach within the deadband. '5'
-        //  is chosen as the deadband multiplier and may be
-        //  changed with experimentation.
-        if((Math.abs(error)<5*drive_deadband) && (error<0.0)) {
-            if(drive_power>0.1)drive_power-=0.1;
-            falcon_drive.set(ControlMode.PercentOutput,-drive_power);
-        }
+            count=falcon_drive.getSelectedSensorPosition(0);
+            error=drive_target-count;
 
-        //  Hard stop if we are near target or have gone past
-        else if((Math.abs(error)<drive_deadband) || (error>0.0)) {
-            falcon_drive.set(ControlMode.PercentOutput,0.0);
+            //  Hard stop if we are near target or have gone past
+            if((Math.abs(error)<drive_deadband) || (error>0.0)) {
+                falcon_drive.set(ControlMode.PercentOutput,0.0);
+                motion_complete=true;
+            }
+
+            updateCounter++;
+            if (updateCounter == 5){
+                System.out.printf("\ncount = %.3f  error = %.3f\n",count,error);
+                updateCounter = 0;
+            }
         }
         return(error);
 
