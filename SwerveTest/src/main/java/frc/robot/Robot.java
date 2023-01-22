@@ -31,6 +31,9 @@
 /////////////////////////////////////////////////////////////////
 package frc.robot;
 
+import com.ctre.phoenix.motorcontrol.ControlMode;
+
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -59,6 +62,9 @@ static SwerveDriveThread test;
 private int init=1;
 static boolean thread_is_active=false;
 private int auto_update=0;
+
+//Joystick
+public final Joystick stick = new Joystick(0);
 
 
   /**
@@ -120,8 +126,8 @@ private int auto_update=0;
       
   } 
   if(auto_update==20)  {
-    System.out.println("Thread active = " + thread_is_active);
-    System.out.println("SwerveDriveTest" + test.isactive);
+    //System.out.println("Thread active = " + thread_is_active);
+    //System.out.println("SwerveDriveTest" + test.isactive);
        
     auto_update=0;
   }
@@ -134,43 +140,30 @@ private int auto_update=0;
   public void teleopInit() {
 
     drive=new SwerveDrive();
+    drive.drive_init = 1;
 
   }
 
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-    //error=drive.rotateLeft(90.0);
-    //System.out.printf("\nerror = %.3lf\n",error);
-    drive.rotateLeft(90.0);
-
-    /*count++;
-    if (count == 100){
-      error = drive.return2Zero();
-      count = 0;
-    }*/
-    
-=======
     //error=drive.rotateRight(45.0);
     //System.out.printf("\nerror = %.3lf\n",error);
     
-    drive.drive_init = 1;
-    error = drive.moveFwd(24.0);
-    //System.out.printf("\nerror = %.3f\n",error);
+    
+    //drive.moveFwd(24.0);
 
-    drive.updateCounter++;
+    //drive.moveReverse(36.0);
 
-        if (drive.updateCounter == 5){
-            System.out.printf("\nerror = %.3f\n",error);
-            drive.updateCounter = 0;
-        }
->>>>>>> Stashed changes
-=======
-    error=drive.rotateRight(45.0);
-    System.out.printf("\nerror = %.3lf\n",error);
->>>>>>> NewTesting
+    //drive.return2Zero();
+
+    drive.falcon_drive.set(ControlMode.PercentOutput, stick.getRawAxis(1));
+    drive.falcon_turn.set(ControlMode.PercentOutput, stick.getRawAxis(2));
+
+    if (stick.getRawButton(1) == true){
+      test.isactive = 1;
+    }
+  
   }
 
   /** This function is called once when the robot is disabled. */
