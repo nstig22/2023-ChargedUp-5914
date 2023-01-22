@@ -4,12 +4,18 @@
 
 package frc.robot.subsystems;
 
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class ExampleSubsystem extends SubsystemBase {
+public class SwerveDrive extends SubsystemBase {
+  WPI_TalonFX driveMotor = new WPI_TalonFX(6);
+  WPI_TalonFX turnMotor = new WPI_TalonFX(7);
+
   /** Creates a new ExampleSubsystem. */
-  public ExampleSubsystem() {}
+  public SwerveDrive() {}
 
   /**
    * Example command factory method.
@@ -38,6 +44,12 @@ public class ExampleSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
+  }
+
+  //Function to set the speeds of the motors
+  public void setMotors(double driveSpeed, double turnSpeed){
+    driveMotor.set(ControlMode.PercentOutput, driveSpeed);
+    turnMotor.set(ControlMode.PercentOutput, turnSpeed);
   }
 
   @Override
