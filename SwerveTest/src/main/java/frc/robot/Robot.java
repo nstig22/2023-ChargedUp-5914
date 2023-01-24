@@ -77,6 +77,9 @@ public final Joystick stick = new Joystick(0);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
 
+    //Encoder testing
+    
+
     //  Moved this allocation to TeleopInit()
     //drive=new SwerveDrive();
   }
