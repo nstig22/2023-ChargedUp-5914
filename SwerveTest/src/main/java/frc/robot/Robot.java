@@ -33,6 +33,7 @@ package frc.robot;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 
+import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -62,9 +63,14 @@ static SwerveDriveThread test;
 private int init=1;
 static boolean thread_is_active=false;
 private int auto_update=0;
+int count;
 
 //Joystick
 public final Joystick stick = new Joystick(0);
+
+
+//Encoder testing
+public DutyCycleEncoder encoder;
 
 
   /**
@@ -77,8 +83,13 @@ public final Joystick stick = new Joystick(0);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
 
-    //Encoder testing
-    
+
+    //Encoder stuff
+    encoder = new DutyCycleEncoder(0);
+
+    encoder.setConnectedFrequencyThreshold(976);
+    encoder.setDutyCycleRange(1.0 / 1025, 1025.0 / 1025);
+
 
     //  Moved this allocation to TeleopInit()
     //drive=new SwerveDrive();
@@ -150,6 +161,18 @@ public final Joystick stick = new Joystick(0);
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
+
+    //Reading encoder
+    double position = encoder.getAbsolutePosition();
+
+    count++;
+
+    if (count == 5){
+      System.out.printf("\nEncoder value = %.5f\n", position);
+      count = 0;
+    }
+    
+
     //error=drive.rotateRight(45.0);
     //System.out.printf("\nerror = %.3lf\n",error);
     
