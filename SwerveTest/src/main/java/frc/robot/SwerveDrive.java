@@ -17,7 +17,9 @@
 //  matches it is needed to set the turning motor in the "zero"
 //  position.
 //
-//
+//  1/24/2023:  Modified to use the absolute encoder for turning
+//  function.
+
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
 package frc.robot;
@@ -26,6 +28,7 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
+import edu.wpi.first.wpilibj.DutyCycleEncoder;
 
 public class SwerveDrive extends Robot{
 
@@ -46,7 +49,8 @@ public class SwerveDrive extends Robot{
     private double drive_reduce=4.0;
 
     //  Ring and pinion teeth
-    private double turn_pinion=38.0;
+    //  1/23/2023: Changed turn reduction to 1:1
+    private double turn_pinion=80.0;
     private double turn_ring=80.0;
     private double drive_pinion=38.0;
     private double drive_ring=64.0;
@@ -57,8 +61,12 @@ public class SwerveDrive extends Robot{
 
     private Delay delay;
 
+    //  Declare as private because we will be using four of these
     WPI_TalonFX falcon_turn;
     WPI_TalonFX falcon_drive;
+
+    //  Absolute encoder declaration
+    DutyCycleEncoder  enc_abs;
 
     double initial_count;
 
@@ -85,10 +93,15 @@ public class SwerveDrive extends Robot{
         falcon_drive.setInverted(false);
         falcon_drive.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor,0, 50);
 
-         //  Zero encoders
+         //  Zero falcon encoders
          falcon_turn.setSelectedSensorPosition(0);
-         //  Zero encoders
+         //  Zero falcon encoders
          falcon_drive.setSelectedSensorPosition(0);
+
+         enc_abs = new DutyCycleEncoder(0);
+         enc_abs.setConnectedFrequencyThreshold(976);
+         enc_abs.setDutyCycleRange(1.0/1025,1025.0/1025);
+         enc_abs.reset();
     }
 
     //  Alternate constructor allowing input of turn and drive CAN ids
@@ -114,6 +127,11 @@ public class SwerveDrive extends Robot{
          falcon_turn.setSelectedSensorPosition(0);
          //  Zero encoders
          falcon_drive.setSelectedSensorPosition(0);
+
+         enc_abs = new DutyCycleEncoder(0);
+         enc_abs.setConnectedFrequencyThreshold(976);
+         enc_abs.setDutyCycleRange(1.0/1025,1025.0/1025);
+         enc_abs.reset();
     }
 
 
@@ -127,7 +145,7 @@ public class SwerveDrive extends Robot{
     //
     //  Returns:
     //
-    //  Remarks:  33.7:1
+    //  Remarks:  
     //
     /////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////
@@ -244,6 +262,30 @@ public class SwerveDrive extends Robot{
         return(counts_per_degree);
     }
 
+    double compute_countsDegrees_ABS(double degrees)
+    {
+        double dtmp;
+        double motor_revs;
+        
+        //  To rotate 360 degrees requires 
+        motor_revs=computeFinalTurnRatio();
+        counts_per_degree=8192*motor_revs/360.0;
+
+        dtmp=counts_per_degree*degrees;
+     
+        return(dtmp);
+    }
+
+    double counts_perDegree_ABS()
+    {
+        double motor_revs;
+
+        motor_revs=computeFinalTurnRatio();
+        counts_per_degree=8192*motor_revs/360.0;
+
+        return(counts_per_degree);
+    }
+
 
     /////////////////////////////////////////////////////////////////
     //  Function:   double rotateRight(double degrees)
@@ -272,7 +314,8 @@ public class SwerveDrive extends Robot{
         //  state correctly set we add the computed counts to the
         //  present position to rotate the drive clockwise
         if(rotate_init==1)  {
-            turn_target=compute_countsDegrees(degrees);
+            count=falcon_turn.getSelectedSensorPosition(0);
+            turn_target=count+compute_countsDegrees(degrees);
             System.out.printf("Turn target = %.3f\n",turn_target);
             updateCounter=0;
             rotate_init=0;            
@@ -312,6 +355,58 @@ public class SwerveDrive extends Robot{
         return(error);
   
     }
+
+
+    //  Similar to previous function but uses the absolute encoder
+    double rotateRight_ABS(double degrees)
+    {
+        double error=0.0;
+
+        //  First time through, get the initial position.  We compute
+        //  the number of counts associated with the degrees and
+        //  compute our target count.  If we have our motor inversion
+        //  state correctly set we add the computed counts to the
+        //  present position to rotate the drive clockwise
+        if(rotate_init==1)  {
+            count=enc_abs.getAbsolutePosition();
+            turn_target=count+compute_countsDegrees_ABS(degrees);
+            System.out.printf("Turn target = %.3f\n",turn_target);
+            updateCounter=0;
+            rotate_init=0;            
+        }
+
+        if(motion_complete==false)  {      
+            //  Set the motor in motion, wait a bit and then read the encoder
+            //  and compute the error.
+            if (count < turn_target){
+                falcon_turn.set(ControlMode.PercentOutput, 0.5);
+                delay.delay_milliseconds(20.0);     
+                count=enc_abs.getAbsolutePosition();
+                error = turn_target - count;  //  In this case should be positive
+            }
+            
+            //  Are we within the deadband for the turn?  Have we overshot?
+            //  If either of these are true, stop the motor.  We need to
+            //  set a flag that the motion has been completed or we will
+            //  continue to drive the motors on calls after we have
+            //  satisfied this condition.  Since "error" has function
+            //  scope it is set to zero every time this function is called
+            if ((Math.abs(error)<turn_deadband)||(error<0.0)) {
+                falcon_turn.set(ControlMode.PercentOutput, 0.0);
+                motion_complete=true; 
+
+            }  
+
+            updateCounter++;
+            if (updateCounter == 2){
+                System.out.printf("\ncount = %.3f  error = %.3f\n",count,error);
+                updateCounter = 0;
+            }
+        }  //  if(motion_complete==false)
+        return(error);
+  
+    }
+
 
     /////////////////////////////////////////////////////////////////
     //  Function:  double rotateLeft(double degrees)
@@ -358,6 +453,58 @@ public class SwerveDrive extends Robot{
                 delay.delay_milliseconds(20.0);
         
                 count=falcon_turn.getSelectedSensorPosition(0);
+                //  Compute the error.  In this case it should be negative.
+                error = turn_target - count; 
+            }
+            
+            //  Are we within the deadband for the turn?  Have we overshot?
+            //  If either of these are true, stop the motor.
+            if ((Math.abs(error)<turn_deadband)||(error>0.0)) {
+                falcon_turn.set(ControlMode.PercentOutput, 0.0);
+                motion_complete=true;
+            }
+
+            updateCounter++;
+            if (updateCounter == 2){
+                System.out.printf("\ncount = %.3f  error = %.3f\n",count,error);
+                updateCounter = 0;
+            }
+        }  //  if(motion_complete==false)
+   
+        return(error);
+
+    }
+
+    //  similar to the previous function but uses the absolute encoder
+    //  1/24/2023:  Messy - maybe there is a better way of doing this.
+    //  I don't like all of the flags.
+    double rotateLeft_ABS(double degrees)
+    {
+        double error=0.0;
+
+        //  We compute the number of counts associated with the degrees and
+        //  compute our target count.  If we have our motor inversion
+        //  state correctly set we subtract the computed counts from the
+        //  present position to rotate the drive counter-clockwise
+        if(rotate_init==1)  {
+            count=enc_abs.getAbsolutePosition();
+            turn_target=count-compute_countsDegrees_ABS(degrees);
+            System.out.printf("Turn target = %.3f\n",turn_target);
+            updateCounter=0;
+            rotate_init=0;            
+        }
+
+        if(motion_complete==false)  {     
+            //  Set the motor in motion, wait a bit and then read the encoder
+            //  and compute the error.  We keep driving the motor as long
+            //  as the measured encoder counts are greater than the target
+            //  value.
+            if (count > turn_target)  {
+                falcon_turn.set(ControlMode.PercentOutput, -0.5);
+
+                delay.delay_milliseconds(20.0);
+        
+                count=enc_abs.getAbsolutePosition();
                 //  Compute the error.  In this case it should be negative.
                 error = turn_target - count; 
             }
@@ -432,6 +579,41 @@ public class SwerveDrive extends Robot{
         }  else if(initial_count<0.0)  {
            
             rotateRight(degrees);
+
+        }
+        return(0);
+
+    }
+
+    //  similar to the previous function but uses the absolute encoder
+    int return2Zero_ABS()
+    {
+        double error=0;
+        double degrees;
+
+        //  First time through, get the initial position
+        if(zeroInit == 1)  {
+            initial_count=enc_abs.getAbsolutePosition();
+            // In this case our target should be less than the present
+            // position - could in fact be negative.  The result of the
+            // computation of degree counts will be positive.
+            turn_target=0.0;
+            error=turn_target-initial_count;
+            System.out.printf("initial_count = %.3f  error = %.3f\n",initial_count,error);
+            zeroInit = 0;
+            rotate_init=1;
+        }
+
+        degrees=error/counts_perDegree_ABS();
+        motion_complete=false;
+
+        if(initial_count>0.0)  {
+        
+            rotateLeft_ABS(degrees);
+            
+        }  else if(initial_count<0.0)  {
+           
+            rotateRight_ABS(degrees);
 
         }
         return(0);

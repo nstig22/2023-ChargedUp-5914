@@ -294,28 +294,92 @@ class SwerveDriveThread implements Runnable {
 
     }
 
+    double turnRight_ABS(double degrees)
+    {
+        boolean debug = false;
+
+        double count=0;
+        double target=0;
+
+        long start_time=0;
+        long end_time=0;
+        double elapsed_time=0.0;
+        double error;
+
+        //  Determine position, compute target counts
+        count=drive.enc_abs.getAbsolutePosition();        
+        target=count+drive.compute_countsDegrees_ABS(degrees);                    
+        
+        
+        if(debug==true) {
+            System.out.printf("Right Turn target = %.3f  count = %.3f\n",target,count);
+        }
+
+        start_time=System.nanoTime();   
+       
+        while (count < (target+drive.turn_deadband)){
+            drive.falcon_turn.set(ControlMode.PercentOutput, 0.2);
+
+            delay.delay_milliseconds(20.0);
+    
+            count=drive.enc_abs.getAbsolutePosition();     
+
+            error = target - count;  //  In this case should be positive
+    
+            if(debug==true)  {
+                updateCounter++;
+                if (updateCounter == 10){
+                    System.out.printf("count = %.3f\n",count);
+                    System.out.printf("error = %.3f\n",error);
+                    updateCounter = 0;
+                }
+            }
+
+            //  Escape hatch
+            end_time=System.nanoTime();
+            elapsed_time=end_time-start_time;
+            elapsed_time*=1e-6;  //  convert to milliseconds
+            if(elapsed_time>2000.0)  {
+                System.out.printf("Elapsed Time within turnRight() has exceeded limits.");
+                stop();
+                break;
+            }
+            
+        }
+        
+        //  Are we within the deadband for the turn?  Have we overshot?
+        //  If either of these are true, stop the motor, read the position,
+        //  and return the error (turn_target-count)
+        if ((Math.abs(target-count)<drive.turn_deadband)||(count > target)) {
+            stop();
+            count=drive.enc_abs.getAbsolutePosition();     
+            updateCounter=0;
+            return(target-count);
+        }
+   
+        //  If we have reached this point it would indicate an error of some sort.  Either
+        //  we exited the while loop because of a hang or we failed to converge within the
+        //  deadband.
+        return(999.999);
+
+    }
+
+
     //Function to turn right using the gyro
-    void turnRight(double degrees, double speed){
+    void turnRight(double degrees, double speed)  {
+
+        boolean debug=true;
+        long start_time=0;
+        long end_time=0;
+        double elapsed_time=0.0;
         double angle = driveGyro.getAngle();
-        //double target = angle + degrees;
         int count = 0;
 
         driveGyro.reset();
 
-        System.out.printf("\nangle = %.3f", driveGyro.getAngle());
-
-        /*while (true){
-            angle = driveGyro.getAngle();
-
-            delay.delay_milliseconds(20.0);
-
-            if (count == 20){
-                System.out.printf("\nangle = %.3f\n", angle);
-                count = 0;
-            }
-
-            count++;
-        }*/
+        if(debug==true)  {
+            System.out.printf("\nangle = %.3f", driveGyro.getAngle());
+        }
 
         turnRight(45);
 
@@ -328,20 +392,85 @@ class SwerveDriveThread implements Runnable {
 
             delay.delay_milliseconds(20.0);
 
-            if (count == 5){
-                System.out.printf("\nangle = %.3f\n", angle);
-                count = 0;
+            if(debug==true)  {
+                if (count == 5){
+                    System.out.printf("\nangle = %.3f\n", angle);
+                    count = 0;
+                }
             }
 
             count++;
+
+             //  Escape hatch
+             end_time=System.nanoTime();
+             elapsed_time=end_time-start_time;
+             elapsed_time*=1e-6;  //  convert to milliseconds
+             if(elapsed_time>2000.0)  {
+                 System.out.printf("Elapsed Time within turnRight() has exceeded limits.");
+                 stop();
+                 break;
+             }
         }
 
         delay.delay_milliseconds(200.0);
 
         return2Zero();
-
-        //return 0;
+     
     }
+
+        //Function to turn right using the gyro
+        void turnRight_ABS(double degrees, double speed)  {
+
+            boolean debug=true;
+            long start_time=0;
+            long end_time=0;
+            double elapsed_time=0.0;
+            double angle = driveGyro.getAngle();
+            int count = 0;
+    
+            driveGyro.reset();
+    
+            if(debug==true)  {
+                System.out.printf("\nangle = %.3f", driveGyro.getAngle());
+            }
+    
+            turnRight(45);
+    
+            while (angle < 90){
+                drive.falcon_drive.set(ControlMode.PercentOutput, 0.1);
+    
+                delay.delay_milliseconds(20.0);
+    
+                angle = driveGyro.getAngle();
+    
+                delay.delay_milliseconds(20.0);
+    
+                if(debug==true)  {
+                    if (count == 5){
+                        System.out.printf("\nangle = %.3f\n", angle);
+                        count = 0;
+                    }
+                }
+    
+                count++;
+    
+                 //  Escape hatch
+                 end_time=System.nanoTime();
+                 elapsed_time=end_time-start_time;
+                 elapsed_time*=1e-6;  //  convert to milliseconds
+                 if(elapsed_time>2000.0)  {
+                     System.out.printf("Elapsed Time within turnRight() has exceeded limits.");
+                     stop();
+                     break;
+                 }
+            }
+    
+            delay.delay_milliseconds(200.0);
+    
+            return2Zero();
+         
+        }
+    
 
     double turnLeft(double degrees)
     {
@@ -415,6 +544,77 @@ class SwerveDriveThread implements Runnable {
 
     }
 
+    double turnLeft_ABS(double degrees)
+    {
+        boolean debug=false;
+
+        double count=0;
+        double target=0;
+        long start_time=0;
+        long end_time=0;
+        double elapsed_time=0.0;
+        double error;
+
+        // Get the initial position, compute the number of counts
+               
+        count=drive.enc_abs.getAbsolutePosition();         
+        target=count-drive.compute_countsDegrees_ABS(degrees);  
+        
+        updateCounter=0;
+
+        start_time=System.nanoTime();
+        
+        if(debug==true)  {
+            System.out.printf("Left Turn target = %.3f  count =%.3f\n",target,count); 
+        }       
+        
+        while (count > target)  {
+            drive.falcon_turn.set(ControlMode.PercentOutput, -0.2);
+
+            delay.delay_milliseconds(20.0);
+    
+            count=drive.enc_abs.getAbsolutePosition(); 
+
+            error = target - count;
+    
+            if(debug==true)  {
+                updateCounter++;
+                if (updateCounter == 10){
+                    System.out.printf("count = %.3f\n",count);
+                    System.out.printf("error = %.3f\n",error);
+                    updateCounter = 0;
+                }
+            }
+
+             //  Escape hatch
+             end_time=System.nanoTime();
+             elapsed_time=end_time-start_time;
+             elapsed_time*=1e-6;  //  convert to milliseconds
+            if(elapsed_time>2000.0)  {
+                System.out.printf("Elapsed Time within turnRight() has exceeded limits.");
+                stop();
+                break;
+            }
+
+        }  //  while( ... )
+        
+        //  Are we within the deadband for the turn?  Have we overshot?
+        //  If either of these are true, stop the motor, read the position,
+        //  and return the error (turn_target-count)
+        if ((Math.abs(target-count)<drive.turn_deadband)||(count < target)) {
+            stop();
+            count=drive.enc_abs.getAbsolutePosition(); 
+            return(target-count);
+        }
+   
+        //  If we have reached this point it would indicate an error of some sort.  Either
+        //  we exited the while loop because of a hang or we failed to converge within the
+        //  deadband.  Note that the return value here is negative - just so we might
+        //  be able to tell which function timed out.
+        return(-999.999);
+
+    }
+
     /////////////////////////////////////////////////////////////////
     //  Function:  int return2Zero()
     /////////////////////////////////////////////////////////////////
@@ -477,6 +677,40 @@ class SwerveDriveThread implements Runnable {
 
     }
 
+    double return2Zero_ABS()
+    {
+        double count=0;
+        double degrees;
+        double return_val;
+
+        //  Get the position        
+        count=drive.enc_abs.getAbsolutePosition(); 
+        delay.delay_milliseconds(20);      
+            
+        System.out.printf("\nInitial Count = %.3f\n",count);
+       
+        degrees=count/drive.counts_perDegree_ABS();
+
+       System.out.printf("\nDegrees=%.3f\n",degrees);
+
+        if(count>0.0)  {
+        
+            return_val=turnLeft_ABS(Math.abs(degrees));
+            if(return_val==999.999)  {
+                System.out.printf("Timeout: Return of turnLeft() = %.3lf",return_val);
+            }
+            
+        }  else if(count<0.0)  {
+           
+            return_val=turnRight_ABS(Math.abs(degrees));
+            if(return_val==-999.999)  {
+                System.out.printf("Timeout: Return of turnRight_ABS() = %.3lf",return_val);
+            }
+
+        }
+        return(0);
+
+    }
 
     double driveFwd(double inches)
     {
