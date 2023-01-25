@@ -72,7 +72,7 @@ public class Robot extends TimedRobot {
   public final Joystick stick = new Joystick(0);
 
   // Encoder testing
-  public DutyCycleEncoder encoder;
+  //public DutyCycleEncoder encoder;
 
   /**
    * This function is run when the robot is first started up and should be used
@@ -86,10 +86,10 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData("Auto choices", m_chooser);
 
     // Encoder stuff
-    encoder = new DutyCycleEncoder(0);
+    //encoder = new DutyCycleEncoder(0);
 
-    encoder.setConnectedFrequencyThreshold(976);
-    encoder.setDutyCycleRange(1.0 / 1025, 1025.0 / 1025);
+    //encoder.setConnectedFrequencyThreshold(976);
+    //encoder.setDutyCycleRange(1.0 / 1025, 1025.0 / 1025);
 
     // Moved this allocation to TeleopInit()
     // drive=new SwerveDrive();
@@ -173,14 +173,14 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
 
     // Reading encoder
-    double position = encoder.getAbsolutePosition();
+    /*double position = encoder.getAbsolutePosition();
 
     count++;
 
     if (count == 5) {
       System.out.printf("\nEncoder value = %.5f\n", position);
       count = 0;
-    }
+    }*/
 
     // error=drive.rotateRight(45.0);
     // System.out.printf("\nerror = %.3lf\n",error);
