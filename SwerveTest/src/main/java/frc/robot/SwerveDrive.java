@@ -30,732 +30,707 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 
-public class SwerveDrive extends Robot{
+public class SwerveDrive extends Robot {
 
-    //Debug code
+    // Debug code
     int zeroInit = 1;
     int updateCounter = 0;
     double count;
     boolean motion_complete;
 
-    private int turn_ID=7;
-    private int drive_ID=6;
+    private int turn_ID = 7;
+    private int drive_ID = 6;
 
-    int rotate_init=1;
-    int drive_init=1;
+    int rotate_init = 1;
+    int drive_init = 1;
 
-    //  Gear reduction boxes
-    private double turn_reduce=20.0;
-    private double drive_reduce=4.0;
+    // Gear reduction boxes
+    private double turn_reduce = 20.0;
+    private double drive_reduce = 4.0;
 
-    //  Ring and pinion teeth
-    //  1/23/2023: Changed turn reduction to 1:1
-    private double turn_pinion=80.0;
-    private double turn_ring=80.0;
-    private double drive_pinion=38.0;
-    private double drive_ring=64.0;
+    // Ring and pinion teeth
+    // 1/23/2023: Changed turn reduction to 1:1
+    private double turn_pinion = 80.0;
+    private double turn_ring = 80.0;
+    private double drive_pinion = 38.0;
+    private double drive_ring = 64.0;
 
-    private double wheel_diameter=4.0;
+    private double wheel_diameter = 4.0;
 
     private double counts_per_degree;
 
     private Delay delay;
 
-    //  Declare as private because we will be using four of these
+    // Declare as private because we will be using four of these
     WPI_TalonFX falcon_turn;
     WPI_TalonFX falcon_drive;
 
-    //  Absolute encoder declaration
-    DutyCycleEncoder  enc_abs;
+    // Absolute encoder declaration
+    DutyCycleEncoder enc_abs;
 
     double initial_count;
 
     double turn_target;
-    double turn_power=0.5;
-    double turn_deadband=100.0;
+    double turn_power = 0.5;
+    double turn_deadband = 100.0;
 
     double drive_target;
-    double drive_power=0.2;
-    double drive_deadband=1000.0;  //  ~ 1/2"
+    double drive_power = 0.2;
+    double drive_deadband = 1000.0; // ~ 1/2"
 
-    //  Default Constructor
-    SwerveDrive()
-    {
-        delay=new Delay();
+    // Default Constructor
+    SwerveDrive() {
+        delay = new Delay();
 
-        falcon_turn = new WPI_TalonFX(turn_ID);   
+        falcon_turn = new WPI_TalonFX(turn_ID);
         falcon_turn.setNeutralMode(NeutralMode.Brake);
         falcon_turn.setInverted(true);
-        falcon_turn.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor,0, 50);
+        falcon_turn.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 50);
 
-        falcon_drive = new WPI_TalonFX(drive_ID);   
+        falcon_drive = new WPI_TalonFX(drive_ID);
         falcon_drive.setNeutralMode(NeutralMode.Brake);
         falcon_drive.setInverted(false);
-        falcon_drive.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor,0, 50);
+        falcon_drive.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 50);
 
-         //  Zero falcon encoders
-         falcon_turn.setSelectedSensorPosition(0);
-         //  Zero falcon encoders
-         falcon_drive.setSelectedSensorPosition(0);
+        // Zero falcon encoders
+        falcon_turn.setSelectedSensorPosition(0);
+        // Zero falcon encoders
+        falcon_drive.setSelectedSensorPosition(0);
 
-         enc_abs = new DutyCycleEncoder(0);
-         enc_abs.setConnectedFrequencyThreshold(976);
-         enc_abs.setDutyCycleRange(1.0/1025,1025.0/1025);
-         enc_abs.reset();
+        enc_abs = new DutyCycleEncoder(0);
+        enc_abs.setConnectedFrequencyThreshold(976);
+        enc_abs.setDutyCycleRange(1.0 / 1025, 1025.0 / 1025);
+        enc_abs.reset();
     }
 
-    //  Alternate constructor allowing input of turn and drive CAN ids
-    SwerveDrive(int turn_id,int drive_id)
-    {
-        delay=new Delay();
+    // Alternate constructor allowing input of turn and drive CAN ids
+    SwerveDrive(int turn_id, int drive_id) {
+        delay = new Delay();
 
-        //  Assign private member variables to arguments.
-        turn_ID=turn_id;
-        drive_ID=drive_id;
+        // Assign private member variables to arguments.
+        turn_ID = turn_id;
+        drive_ID = drive_id;
 
-        falcon_turn = new WPI_TalonFX(turn_id);   
+        falcon_turn = new WPI_TalonFX(turn_id);
         falcon_turn.setNeutralMode(NeutralMode.Brake);
         falcon_turn.setInverted(true);
-        falcon_turn.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor,0, 50);
+        falcon_turn.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 50);
 
-        falcon_drive = new WPI_TalonFX(drive_id);   
+        falcon_drive = new WPI_TalonFX(drive_id);
         falcon_drive.setNeutralMode(NeutralMode.Brake);
         falcon_drive.setInverted(false);
-        falcon_drive.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor,0, 50);
+        falcon_drive.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 50);
 
-         //  Zero encoders
-         falcon_turn.setSelectedSensorPosition(0);
-         //  Zero encoders
-         falcon_drive.setSelectedSensorPosition(0);
+        // Zero encoders
+        falcon_turn.setSelectedSensorPosition(0);
+        // Zero encoders
+        falcon_drive.setSelectedSensorPosition(0);
 
-         enc_abs = new DutyCycleEncoder(0);
-         enc_abs.setConnectedFrequencyThreshold(976);
-         enc_abs.setDutyCycleRange(1.0/1025,1025.0/1025);
-         enc_abs.reset();
+        enc_abs = new DutyCycleEncoder(0);
+        enc_abs.setConnectedFrequencyThreshold(976);
+        enc_abs.setDutyCycleRange(1.0 / 1025, 1025.0 / 1025);
+        enc_abs.reset();
     }
 
-
     /////////////////////////////////////////////////////////////////
-    //  Function:  double computeFinalTurnRatio()
+    // Function: double computeFinalTurnRatio()
     /////////////////////////////////////////////////////////////////
     //
-    //  Purpose:  Computes net gear reduction for the turn mechanism
+    // Purpose: Computes net gear reduction for the turn mechanism
     //
-    //  Arguments:void
+    // Arguments:void
     //
-    //  Returns:
+    // Returns:
     //
-    //  Remarks:  
+    // Remarks:
     //
     /////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////
-    double computeFinalTurnRatio()
-    {   
+    double computeFinalTurnRatio() {
         double dtmp;
 
-        dtmp=turn_reduce*turn_ring/turn_pinion;
+        dtmp = turn_reduce * turn_ring / turn_pinion;
 
-        return(dtmp);
-        
+        return (dtmp);
+
     }
 
-
     /////////////////////////////////////////////////////////////////
-    //  Function:  double computeFinalDriveRatio()
+    // Function: double computeFinalDriveRatio()
     /////////////////////////////////////////////////////////////////
     //
-    //  Purpose:  Given the initial gear reduction and the pinion
-    //            and ring gear teeth counts.  This function
-    //            computes the net gear reduction.
+    // Purpose: Given the initial gear reduction and the pinion
+    // and ring gear teeth counts. This function
+    // computes the net gear reduction.
     //
-    //  Arguments:void
+    // Arguments:void
     //
-    //  Returns:  The gear reduction as double
+    // Returns: The gear reduction as double
     //
-    //  Remarks:  8.4:1 with intended configuration
+    // Remarks: 8.4:1 with intended configuration
     //
     /////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////
-    double computeFinalDriveRatio()
-    {   
+    double computeFinalDriveRatio() {
         double dtmp;
 
-        dtmp=drive_reduce*drive_ring/drive_pinion;
+        dtmp = drive_reduce * drive_ring / drive_pinion;
 
-        return(dtmp);
-        
+        return (dtmp);
+
     }
 
     /////////////////////////////////////////////////////////////////
-    //  Function:  double compute_countsDistance(double distance)
+    // Function: double compute_countsDistance(double distance)
     /////////////////////////////////////////////////////////////////
     //
-    //  Purpose:  Computes the number of encoder counts to achieve
-    //            the submitted distance in inches.
+    // Purpose: Computes the number of encoder counts to achieve
+    // the submitted distance in inches.
     //
-    //  Arguments:double distance (in inches)
+    // Arguments:double distance (in inches)
     //
-    //  Returns:  Returns the number of counts as double
+    // Returns: Returns the number of counts as double
     //
-    //  Remarks:  Assuming a 4" wheel diameter we have 1369 counts
-    //            per inch.
+    // Remarks: Assuming a 4" wheel diameter we have 1369 counts
+    // per inch.
     //
     /////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////  distance in inches
-    double compute_countsDistance(double distance)
-    {
+    /////////////////////////////////////////////////////////////////// distance in
+    ///////////////////////////////////////////////////////////////// inches
+    double compute_countsDistance(double distance) {
         double dtmp;
-        double counts_per_rev;  //  encoder counts per wheel revolution  
-        double wheel_revs;      //  number of drive wheel rotations to acheive distance
-        
-        wheel_revs=distance/(Math.PI*wheel_diameter);
-        counts_per_rev=2048*computeFinalDriveRatio();
+        double counts_per_rev; // encoder counts per wheel revolution
+        double wheel_revs; // number of drive wheel rotations to acheive distance
 
-        dtmp=wheel_revs*counts_per_rev;
-        return(dtmp);
+        wheel_revs = distance / (Math.PI * wheel_diameter);
+        counts_per_rev = 2048 * computeFinalDriveRatio();
+
+        dtmp = wheel_revs * counts_per_rev;
+        return (dtmp);
 
     }
 
-
     /////////////////////////////////////////////////////////////////
-    //  Function:  double compute_countsDegrees(double degrees)
+    // Function: double compute_countsDegrees(double degrees)
     /////////////////////////////////////////////////////////////////
     //
-    //  Purpose:  Computes the encoder counts for a rotation
-    //            of the specified number of degrees.
+    // Purpose: Computes the encoder counts for a rotation
+    // of the specified number of degrees.
     //
-    //  Arguments:double degrees
+    // Arguments:double degrees
     //
-    //  Returns:  The number of encoder counts for the rotation
+    // Returns: The number of encoder counts for the rotation
     //
-    //  Remarks:  Just to get an idea of the magnitude of the 
-    //            counts for 1 degree of rotation:
+    // Remarks: Just to get an idea of the magnitude of the
+    // counts for 1 degree of rotation:
     //
-    //            For a full turn of the rotating mechanism (360)
-    //            Assume there is a gear reduction of the order of 33.7:1.
-    //            If this were true it would imply 191.7 counts per
-    //            degree.
+    // For a full turn of the rotating mechanism (360)
+    // Assume there is a gear reduction of the order of 33.7:1.
+    // If this were true it would imply 191.7 counts per
+    // degree.
     //
     /////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////
-    double compute_countsDegrees(double degrees)
-    {
+    double compute_countsDegrees(double degrees) {
         double dtmp;
         double motor_revs;
-        
-        //  To rotate 360 degrees requires 
-        motor_revs=computeFinalTurnRatio();
-        counts_per_degree=2048*motor_revs/360.0;
 
-        dtmp=counts_per_degree*degrees;
-     
-        return(dtmp);
+        // To rotate 360 degrees requires
+        motor_revs = computeFinalTurnRatio();
+        counts_per_degree = 2048 * motor_revs / 360.0;
+
+        dtmp = counts_per_degree * degrees;
+
+        return (dtmp);
     }
 
-    double counts_perDegree()
-    {
+    double counts_perDegree() {
         double motor_revs;
 
-        motor_revs=computeFinalTurnRatio();
-        counts_per_degree=2048*motor_revs/360.0;
+        motor_revs = computeFinalTurnRatio();
+        counts_per_degree = 2048 * motor_revs / 360.0;
 
-        return(counts_per_degree);
+        return (counts_per_degree);
     }
 
-    double compute_countsDegrees_ABS(double degrees)
-    {
+    double compute_countsDegrees_ABS(double degrees) {
         double dtmp;
         double motor_revs;
-        
-        //  To rotate 360 degrees requires 
-        motor_revs=computeFinalTurnRatio();
-        counts_per_degree=8192*motor_revs/360.0;
 
-        dtmp=counts_per_degree*degrees;
-     
-        return(dtmp);
+        // To rotate 360 degrees requires
+        motor_revs = computeFinalTurnRatio();
+        counts_per_degree = 8192 * motor_revs / 360.0;
+
+        dtmp = counts_per_degree * degrees;
+
+        return (dtmp);
     }
 
-    double counts_perDegree_ABS()
-    {
+    double counts_perDegree_ABS() {
         double motor_revs;
 
-        motor_revs=computeFinalTurnRatio();
-        counts_per_degree=8192*motor_revs/360.0;
+        motor_revs = computeFinalTurnRatio();
+        counts_per_degree = 8192 * motor_revs / 360.0;
 
-        return(counts_per_degree);
+        return (counts_per_degree);
     }
 
+    /////////////////////////////////////////////////////////////////
+    // Function: double rotateRight(double degrees)
+    /////////////////////////////////////////////////////////////////
+    //
+    // Purpose: Rotates the swerve drive in a clockwise direction
+    //
+    // Arguments:double degrees
+    //
+    // Returns: The error in counts as double
+    //
+    // Remarks: At this point we assume that rotating right implies
+    // increasing counts. It is intended that this function is
+    // called multiple times in either teleop or auto modes.
+    //
+    //
+    /////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////
+    double rotateRight(double degrees) {
+        double error = 0.0;
 
-    /////////////////////////////////////////////////////////////////
-    //  Function:   double rotateRight(double degrees)
-    /////////////////////////////////////////////////////////////////
-    //
-    //  Purpose:  Rotates the swerve drive in a clockwise direction
-    //
-    //  Arguments:double degrees
-    //
-    //  Returns: The error in counts as double
-    //
-    //  Remarks: At this point we assume that rotating right implies
-    //  increasing counts.  It is intended that this function is
-    //  called multiple times in either teleop or auto modes.
-    //  
-    //
-    /////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////
-    double rotateRight(double degrees)
-    {
-        double error=0.0;
-
-        //  First time through, get the initial position.  We compute
-        //  the number of counts associated with the degrees and
-        //  compute our target count.  If we have our motor inversion
-        //  state correctly set we add the computed counts to the
-        //  present position to rotate the drive clockwise
-        if(rotate_init==1)  {
-            count=falcon_turn.getSelectedSensorPosition(0);
-            turn_target=count+compute_countsDegrees(degrees);
-            System.out.printf("Turn target = %.3f\n",turn_target);
-            updateCounter=0;
-            rotate_init=0;            
+        // First time through, get the initial position. We compute
+        // the number of counts associated with the degrees and
+        // compute our target count. If we have our motor inversion
+        // state correctly set we add the computed counts to the
+        // present position to rotate the drive clockwise
+        if (rotate_init == 1) {
+            count = falcon_turn.getSelectedSensorPosition(0);
+            turn_target = count + compute_countsDegrees(degrees);
+            System.out.printf("Turn target = %.3f\n", turn_target);
+            updateCounter = 0;
+            rotate_init = 0;
         }
 
-        if(motion_complete==false)  {      
-            //  Set the motor in motion, wait a bit and then read the encoder
-            //  and compute the error.
-            if (count < turn_target){
+        if (motion_complete == false) {
+            // Set the motor in motion, wait a bit and then read the encoder
+            // and compute the error.
+            if (count < turn_target) {
                 falcon_turn.set(ControlMode.PercentOutput, 0.5);
 
                 delay.delay_milliseconds(20.0);
-        
-                count=falcon_turn.getSelectedSensorPosition(0);
 
-                error = turn_target - count;  //  In this case should be positive
+                count = falcon_turn.getSelectedSensorPosition(0);
+
+                error = turn_target - count; // In this case should be positive
             }
-            
-            //  Are we within the deadband for the turn?  Have we overshot?
-            //  If either of these are true, stop the motor.  We need to
-            //  set a flag that the motion has been completed or we will
-            //  continue to drive the motors on calls after we have
-            //  satisfied this condition.  Since "error" has function
-            //  scope it is set to zero every time this function is called
-            if ((Math.abs(error)<turn_deadband)||(error<0.0)) {
-                falcon_turn.set(ControlMode.PercentOutput, 0.0);
-                motion_complete=true; 
 
-            }  
+            // Are we within the deadband for the turn? Have we overshot?
+            // If either of these are true, stop the motor. We need to
+            // set a flag that the motion has been completed or we will
+            // continue to drive the motors on calls after we have
+            // satisfied this condition. Since "error" has function
+            // scope it is set to zero every time this function is called
+            if ((Math.abs(error) < turn_deadband) || (error < 0.0)) {
+                falcon_turn.set(ControlMode.PercentOutput, 0.0);
+                motion_complete = true;
+
+            }
 
             updateCounter++;
-            if (updateCounter == 2){
-                System.out.printf("\ncount = %.3f  error = %.3f\n",count,error);
+            if (updateCounter == 2) {
+                System.out.printf("\ncount = %.3f  error = %.3f\n", count, error);
                 updateCounter = 0;
             }
-        }  //  if(motion_complete==false)
-        return(error);
-  
+        } // if(motion_complete==false)
+        return (error);
+
     }
 
+    // Similar to previous function but uses the absolute encoder
+    double rotateRight_ABS(double degrees) {
+        double error = 0.0;
 
-    //  Similar to previous function but uses the absolute encoder
-    double rotateRight_ABS(double degrees)
-    {
-        double error=0.0;
-
-        //  First time through, get the initial position.  We compute
-        //  the number of counts associated with the degrees and
-        //  compute our target count.  If we have our motor inversion
-        //  state correctly set we add the computed counts to the
-        //  present position to rotate the drive clockwise
-        if(rotate_init==1)  {
-            count=enc_abs.getAbsolutePosition();
-            turn_target=count+compute_countsDegrees_ABS(degrees);
-            System.out.printf("Turn target = %.3f\n",turn_target);
-            updateCounter=0;
-            rotate_init=0;            
+        // First time through, get the initial position. We compute
+        // the number of counts associated with the degrees and
+        // compute our target count. If we have our motor inversion
+        // state correctly set we add the computed counts to the
+        // present position to rotate the drive clockwise
+        if (rotate_init == 1) {
+            count = enc_abs.getAbsolutePosition();
+            turn_target = count + compute_countsDegrees_ABS(degrees);
+            System.out.printf("Turn target = %.3f\n", turn_target);
+            updateCounter = 0;
+            rotate_init = 0;
         }
 
-        if(motion_complete==false)  {      
-            //  Set the motor in motion, wait a bit and then read the encoder
-            //  and compute the error.
-            if (count < turn_target){
+        if (motion_complete == false) {
+            // Set the motor in motion, wait a bit and then read the encoder
+            // and compute the error.
+            if (count < turn_target) {
                 falcon_turn.set(ControlMode.PercentOutput, 0.5);
-                delay.delay_milliseconds(20.0);     
-                count=enc_abs.getAbsolutePosition();
-                error = turn_target - count;  //  In this case should be positive
+                delay.delay_milliseconds(20.0);
+                count = enc_abs.getAbsolutePosition();
+                error = turn_target - count; // In this case should be positive
             }
-            
-            //  Are we within the deadband for the turn?  Have we overshot?
-            //  If either of these are true, stop the motor.  We need to
-            //  set a flag that the motion has been completed or we will
-            //  continue to drive the motors on calls after we have
-            //  satisfied this condition.  Since "error" has function
-            //  scope it is set to zero every time this function is called
-            if ((Math.abs(error)<turn_deadband)||(error<0.0)) {
-                falcon_turn.set(ControlMode.PercentOutput, 0.0);
-                motion_complete=true; 
 
-            }  
+            // Are we within the deadband for the turn? Have we overshot?
+            // If either of these are true, stop the motor. We need to
+            // set a flag that the motion has been completed or we will
+            // continue to drive the motors on calls after we have
+            // satisfied this condition. Since "error" has function
+            // scope it is set to zero every time this function is called
+            if ((Math.abs(error) < turn_deadband) || (error < 0.0)) {
+                falcon_turn.set(ControlMode.PercentOutput, 0.0);
+                motion_complete = true;
+
+            }
 
             updateCounter++;
-            if (updateCounter == 2){
-                System.out.printf("\ncount = %.3f  error = %.3f\n",count,error);
+            if (updateCounter == 2) {
+                System.out.printf("\ncount = %.3f  error = %.3f\n", count, error);
                 updateCounter = 0;
             }
-        }  //  if(motion_complete==false)
-        return(error);
-  
+        } // if(motion_complete==false)
+        return (error);
+
     }
 
+    /////////////////////////////////////////////////////////////////
+    // Function: double rotateLeft(double degrees)
+    /////////////////////////////////////////////////////////////////
+    //
+    // Purpose: Rotates the swerve drive in a counter-clockwise
+    // direction the number of degrees specified.
+    //
+    // Arguments:double degrees
+    //
+    // Returns: The error in counts as double
+    //
+    // Remarks: At this point we assume that rotating left implies
+    // decreasing counts.
+    // Note that if called in TeleOp or Autonomous repeat
+    // calls are made every 20msec or so.
+    //
+    /////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////
+    double rotateLeft(double degrees) {
+        double error = 0.0;
 
-    /////////////////////////////////////////////////////////////////
-    //  Function:  double rotateLeft(double degrees)
-    /////////////////////////////////////////////////////////////////
-    //
-    //  Purpose:  Rotates the swerve drive in a counter-clockwise 
-    //  direction the number of degrees specified.
-    //
-    //  Arguments:double degrees
-    //
-    //  Returns: The error in  counts as double
-    //
-    //  Remarks: At this point we assume that rotating left implies
-    //  decreasing counts.  
-    //  Note that if called in TeleOp or Autonomous repeat
-    //  calls are made every 20msec or so.
-    //
-    /////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////
-    double rotateLeft(double degrees)
-    {
-        double error=0.0;
-
-        //  We compute the number of counts associated with the degrees and
-        //  compute our target count.  If we have our motor inversion
-        //  state correctly set we subtract the computed counts from the
-        //  present position to rotate the drive counter-clockwise
-        if(rotate_init==1)  {
-            turn_target=compute_countsDegrees(degrees);
-            turn_target*=-1.0;
-            System.out.printf("Turn target = %.3f\n",turn_target);
-            updateCounter=0;
-            rotate_init=0;            
+        // We compute the number of counts associated with the degrees and
+        // compute our target count. If we have our motor inversion
+        // state correctly set we subtract the computed counts from the
+        // present position to rotate the drive counter-clockwise
+        if (rotate_init == 1) {
+            turn_target = compute_countsDegrees(degrees);
+            turn_target *= -1.0;
+            System.out.printf("Turn target = %.3f\n", turn_target);
+            updateCounter = 0;
+            rotate_init = 0;
         }
 
-        if(motion_complete==false)  {     
-            //  Set the motor in motion, wait a bit and then read the encoder
-            //  and compute the error.  We keep driving the motor as long
-            //  as the measured encoder counts are greater than the target
-            //  value.
-            if (count > turn_target)  {
+        if (motion_complete == false) {
+            // Set the motor in motion, wait a bit and then read the encoder
+            // and compute the error. We keep driving the motor as long
+            // as the measured encoder counts are greater than the target
+            // value.
+            if (count > turn_target) {
                 falcon_turn.set(ControlMode.PercentOutput, -0.5);
 
                 delay.delay_milliseconds(20.0);
-        
-                count=falcon_turn.getSelectedSensorPosition(0);
-                //  Compute the error.  In this case it should be negative.
-                error = turn_target - count; 
+
+                count = falcon_turn.getSelectedSensorPosition(0);
+                // Compute the error. In this case it should be negative.
+                error = turn_target - count;
             }
-            
-            //  Are we within the deadband for the turn?  Have we overshot?
-            //  If either of these are true, stop the motor.
-            if ((Math.abs(error)<turn_deadband)||(error>0.0)) {
+
+            // Are we within the deadband for the turn? Have we overshot?
+            // If either of these are true, stop the motor.
+            if ((Math.abs(error) < turn_deadband) || (error > 0.0)) {
                 falcon_turn.set(ControlMode.PercentOutput, 0.0);
-                motion_complete=true;
+                motion_complete = true;
             }
 
             updateCounter++;
-            if (updateCounter == 2){
-                System.out.printf("\ncount = %.3f  error = %.3f\n",count,error);
+            if (updateCounter == 2) {
+                System.out.printf("\ncount = %.3f  error = %.3f\n", count, error);
                 updateCounter = 0;
             }
-        }  //  if(motion_complete==false)
-   
-        return(error);
+        } // if(motion_complete==false)
+
+        return (error);
 
     }
 
-    //  similar to the previous function but uses the absolute encoder
-    //  1/24/2023:  Messy - maybe there is a better way of doing this.
-    //  I don't like all of the flags.
-    double rotateLeft_ABS(double degrees)
-    {
-        double error=0.0;
+    // similar to the previous function but uses the absolute encoder
+    // 1/24/2023: Messy - maybe there is a better way of doing this.
+    // I don't like all of the flags.
+    double rotateLeft_ABS(double degrees) {
+        double error = 0.0;
 
-        //  We compute the number of counts associated with the degrees and
-        //  compute our target count.  If we have our motor inversion
-        //  state correctly set we subtract the computed counts from the
-        //  present position to rotate the drive counter-clockwise
-        if(rotate_init==1)  {
-            count=enc_abs.getAbsolutePosition();
-            turn_target=count-compute_countsDegrees_ABS(degrees);
-            System.out.printf("Turn target = %.3f\n",turn_target);
-            updateCounter=0;
-            rotate_init=0;            
+        // We compute the number of counts associated with the degrees and
+        // compute our target count. If we have our motor inversion
+        // state correctly set we subtract the computed counts from the
+        // present position to rotate the drive counter-clockwise
+        if (rotate_init == 1) {
+            count = enc_abs.getAbsolutePosition();
+            turn_target = count - compute_countsDegrees_ABS(degrees);
+            System.out.printf("Turn target = %.3f\n", turn_target);
+            updateCounter = 0;
+            rotate_init = 0;
         }
 
-        if(motion_complete==false)  {     
-            //  Set the motor in motion, wait a bit and then read the encoder
-            //  and compute the error.  We keep driving the motor as long
-            //  as the measured encoder counts are greater than the target
-            //  value.
-            if (count > turn_target)  {
+        if (motion_complete == false) {
+            // Set the motor in motion, wait a bit and then read the encoder
+            // and compute the error. We keep driving the motor as long
+            // as the measured encoder counts are greater than the target
+            // value.
+            if (count > turn_target) {
                 falcon_turn.set(ControlMode.PercentOutput, -0.5);
 
                 delay.delay_milliseconds(20.0);
-        
-                count=enc_abs.getAbsolutePosition();
-                //  Compute the error.  In this case it should be negative.
-                error = turn_target - count; 
+
+                count = enc_abs.getAbsolutePosition();
+                // Compute the error. In this case it should be negative.
+                error = turn_target - count;
             }
-            
-            //  Are we within the deadband for the turn?  Have we overshot?
-            //  If either of these are true, stop the motor.
-            if ((Math.abs(error)<turn_deadband)||(error>0.0)) {
+
+            // Are we within the deadband for the turn? Have we overshot?
+            // If either of these are true, stop the motor.
+            if ((Math.abs(error) < turn_deadband) || (error > 0.0)) {
                 falcon_turn.set(ControlMode.PercentOutput, 0.0);
-                motion_complete=true;
+                motion_complete = true;
             }
 
             updateCounter++;
-            if (updateCounter == 2){
-                System.out.printf("\ncount = %.3f  error = %.3f\n",count,error);
+            if (updateCounter == 2) {
+                System.out.printf("\ncount = %.3f  error = %.3f\n", count, error);
                 updateCounter = 0;
             }
-        }  //  if(motion_complete==false)
-   
-        return(error);
+        } // if(motion_complete==false)
+
+        return (error);
 
     }
 
     /////////////////////////////////////////////////////////////////
-    //  Function:  int return2Zero()
+    // Function: int return2Zero()
     /////////////////////////////////////////////////////////////////
     //
-    //  Purpose:  Assuming we start the robot with the wheels 
-    //  pointing straight forward, on init, we set the encoder
-    //  count to zero.  All turns from that point on are 
-    //  referenced to the current position with 'zero' being
-    //  the home position.  So, our target in counts is zero.
-    //  If the current measured position is positive, we wish
-    //  to rotate in a direction to reduce the measured count
-    //  to zero.  Likewise, if negative we wish to increase the
-    //  measured count to zero.
+    // Purpose: Assuming we start the robot with the wheels
+    // pointing straight forward, on init, we set the encoder
+    // count to zero. All turns from that point on are
+    // referenced to the current position with 'zero' being
+    // the home position. So, our target in counts is zero.
+    // If the current measured position is positive, we wish
+    // to rotate in a direction to reduce the measured count
+    // to zero. Likewise, if negative we wish to increase the
+    // measured count to zero.
     //
-    //  Arguments:void
+    // Arguments:void
     //
-    //  Returns: 0
+    // Returns: 0
     //
-    //  Remarks:  This function does not provide benefit unless we
-    //  started the robot with it's turning wheel pointed straight
-    //  forward.  This is a selling point for an absolute encoder.
+    // Remarks: This function does not provide benefit unless we
+    // started the robot with it's turning wheel pointed straight
+    // forward. This is a selling point for an absolute encoder.
     //
     /////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////
-    int return2Zero()
-    {
-        double error=0;
+    int return2Zero() {
+        double error = 0;
         double degrees;
 
-        //  First time through, get the initial position
-        if(zeroInit == 1)  {
-            initial_count=falcon_turn.getSelectedSensorPosition(0);
+        // First time through, get the initial position
+        if (zeroInit == 1) {
+            initial_count = falcon_turn.getSelectedSensorPosition(0);
             // In this case our target should be less than the present
-            // position - could in fact be negative.  The result of the
+            // position - could in fact be negative. The result of the
             // computation of degree counts will be positive.
-            turn_target=0.0;
-            error=turn_target-initial_count;
-            System.out.printf("initial_count = %.3f  error = %.3f\n",initial_count,error);
+            turn_target = 0.0;
+            error = turn_target - initial_count;
+            System.out.printf("initial_count = %.3f  error = %.3f\n", initial_count, error);
             zeroInit = 0;
-            rotate_init=1;
+            rotate_init = 1;
         }
 
-        degrees=error/counts_perDegree();
-        motion_complete=false;
+        degrees = error / counts_perDegree();
+        motion_complete = false;
 
-        if(initial_count>0.0)  {
-        
+        if (initial_count > 0.0) {
+
             rotateLeft(degrees);
-            
-        }  else if(initial_count<0.0)  {
-           
+
+        } else if (initial_count < 0.0) {
+
             rotateRight(degrees);
 
         }
-        return(0);
+        return (0);
 
     }
 
-    //  similar to the previous function but uses the absolute encoder
-    int return2Zero_ABS()
-    {
-        double error=0;
+    // similar to the previous function but uses the absolute encoder
+    int return2Zero_ABS() {
+        double error = 0;
         double degrees;
 
-        //  First time through, get the initial position
-        if(zeroInit == 1)  {
-            initial_count=enc_abs.getAbsolutePosition();
+        // First time through, get the initial position
+        if (zeroInit == 1) {
+            initial_count = enc_abs.getAbsolutePosition();
             // In this case our target should be less than the present
-            // position - could in fact be negative.  The result of the
+            // position - could in fact be negative. The result of the
             // computation of degree counts will be positive.
-            turn_target=0.0;
-            error=turn_target-initial_count;
-            System.out.printf("initial_count = %.3f  error = %.3f\n",initial_count,error);
+            turn_target = 0.0;
+            error = turn_target - initial_count;
+            System.out.printf("initial_count = %.3f  error = %.3f\n", initial_count, error);
             zeroInit = 0;
-            rotate_init=1;
+            rotate_init = 1;
         }
 
-        degrees=error/counts_perDegree_ABS();
-        motion_complete=false;
+        degrees = error / counts_perDegree_ABS();
+        motion_complete = false;
 
-        if(initial_count>0.0)  {
-        
+        if (initial_count > 0.0) {
+
             rotateLeft_ABS(degrees);
-            
-        }  else if(initial_count<0.0)  {
-           
+
+        } else if (initial_count < 0.0) {
+
             rotateRight_ABS(degrees);
 
         }
-        return(0);
+        return (0);
 
     }
 
     /////////////////////////////////////////////////////////////////
-    //  Function:  double moveFwd(double inches)
+    // Function: double moveFwd(double inches)
     /////////////////////////////////////////////////////////////////
     //
-    //  Purpose:  Drives the swerve assembly forward the specified
-    //  number of inches.
+    // Purpose: Drives the swerve assembly forward the specified
+    // number of inches.
     //
-    //  Arguments:Accepts the distance in inches as double.
+    // Arguments:Accepts the distance in inches as double.
     //
-    //  Returns: The error between intention and execution.
+    // Returns: The error between intention and execution.
     //
-    //  Remarks:  1/10/2023: At this writing, it is assumed that 
-    //  clockwise rotation of the motor will drive the robot forward from
-    //  it's current position.  It might be the opposite
-    //  when the various gear reductions are taken into account.
+    // Remarks: 1/10/2023: At this writing, it is assumed that
+    // clockwise rotation of the motor will drive the robot forward from
+    // it's current position. It might be the opposite
+    // when the various gear reductions are taken into account.
     //
-    //  Note that movement is referenced to the current position.
+    // Note that movement is referenced to the current position.
     //
-    //  1/17/2023:  Interesting observation.  Although in the
-    //  init phase we set the count to the initial position once
-    //  we turn on the motor it would appear that the count begins
-    //  at zero.
+    // 1/17/2023: Interesting observation. Although in the
+    // init phase we set the count to the initial position once
+    // we turn on the motor it would appear that the count begins
+    // at zero.
     //
     /////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////
-    double moveFwd(double inches)
-    {
-        double error=0;
+    double moveFwd(double inches) {
+        double error = 0;
 
-       
-        if(drive_init==1)  {
-            drive_target=compute_countsDistance(inches);        
-            System.out.printf("drive_target = %.3f\n",drive_target);
-            drive_init=0;
-            updateCounter=0;
-            motion_complete=false;
+        if (drive_init == 1) {
+            drive_target = compute_countsDistance(inches);
+            System.out.printf("drive_target = %.3f\n", drive_target);
+            drive_init = 0;
+            updateCounter = 0;
+            motion_complete = false;
         }
 
-        
-        if(motion_complete==false)  {
-            // Turn on the drive motor 
+        if (motion_complete == false) {
+            // Turn on the drive motor
             falcon_drive.set(ControlMode.PercentOutput, drive_power);
             delay.delay_milliseconds(25.0);
 
-            count=falcon_drive.getSelectedSensorPosition(0);
-            error=drive_target-count;
+            count = falcon_drive.getSelectedSensorPosition(0);
+            error = drive_target - count;
 
-            //  Hard stop if we are near target or have gone past
-            if((Math.abs(error)<drive_deadband) || (error<0.0)) {
-                falcon_drive.set(ControlMode.PercentOutput,0.0);
-                motion_complete=true;
+            // Hard stop if we are near target or have gone past
+            if ((Math.abs(error) < drive_deadband) || (error < 0.0)) {
+                falcon_drive.set(ControlMode.PercentOutput, 0.0);
+                motion_complete = true;
             }
 
             updateCounter++;
-            if (updateCounter == 5){
-                System.out.printf("\ncount = %.3f  error = %.3f\n",count,error);
+            if (updateCounter == 5) {
+                System.out.printf("\ncount = %.3f  error = %.3f\n", count, error);
                 updateCounter = 0;
             }
         }
-        return(error);
+        return (error);
 
     }
 
+    /////////////////////////////////////////////////////////////////
+    // Function: double moveReverse(double inches)
+    /////////////////////////////////////////////////////////////////
+    //
+    // Purpose: Drives the swerve assembly rearward the specified
+    // number of inches.
+    //
+    // Arguments:Accepts the distance in inches as double.
+    //
+    // Returns: The error between intention and execution.
+    //
+    // Remarks: 1/10/2023: At this writing, it is assumed that
+    // counter-clockwise rotation of the motor will drive the
+    // robot in reverse from it's current postion. It might be
+    // the opposite when the various gear reductions are taken
+    // into account.
+    //
+    // Note that movement is referenced to the current position.
+    //
+    /////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////
+    double moveReverse(double inches) {
+        double error = 0;
 
-    /////////////////////////////////////////////////////////////////
-    //  Function:  double moveReverse(double inches)
-    /////////////////////////////////////////////////////////////////
-    //
-    //  Purpose:  Drives the swerve assembly rearward the specified
-    //  number of inches.
-    //
-    //  Arguments:Accepts the distance in inches as double.
-    //
-    //  Returns: The error between intention and execution.
-    //
-    //  Remarks:  1/10/2023: At this writing, it is assumed that 
-    //  counter-clockwise rotation of the motor will drive the 
-    //  robot in reverse from it's current postion.  It might be 
-    //  the opposite when the various gear reductions are taken 
-    //  into account.
-    //
-    //  Note that movement is referenced to the current position.
-    //
-    /////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////
-    double moveReverse(double inches)
-    {
-        double error=0;
-
-        if(drive_init==1)  {
-            drive_target=compute_countsDistance(inches); 
-            drive_target*=-1.0;       
-            System.out.printf("drive_target = %.3f\n",drive_target);
-            drive_init=0;
-            updateCounter=0;
-            motion_complete=false;
+        if (drive_init == 1) {
+            drive_target = compute_countsDistance(inches);
+            drive_target *= -1.0;
+            System.out.printf("drive_target = %.3f\n", drive_target);
+            drive_init = 0;
+            updateCounter = 0;
+            motion_complete = false;
         }
 
-        if(motion_complete==false)  {
+        if (motion_complete == false) {
 
             falcon_drive.set(ControlMode.PercentOutput, -drive_power);
 
             delay.delay_milliseconds(10.0);
 
-            count=falcon_drive.getSelectedSensorPosition(0);
-            error=drive_target-count;
+            count = falcon_drive.getSelectedSensorPosition(0);
+            error = drive_target - count;
 
-            //  Hard stop if we are near target or have gone past
-            if((Math.abs(error)<drive_deadband) || (error>0.0)) {
-                falcon_drive.set(ControlMode.PercentOutput,0.0);
-                motion_complete=true;
+            // Hard stop if we are near target or have gone past
+            if ((Math.abs(error) < drive_deadband) || (error > 0.0)) {
+                falcon_drive.set(ControlMode.PercentOutput, 0.0);
+                motion_complete = true;
             }
 
             updateCounter++;
-            if (updateCounter == 5){
-                System.out.printf("\ncount = %.3f  error = %.3f\n",count,error);
+            if (updateCounter == 5) {
+                System.out.printf("\ncount = %.3f  error = %.3f\n", count, error);
                 updateCounter = 0;
             }
         }
-        return(error);
+        return (error);
 
     }
-  
+
 }
 
-    /////////////////////////////////////////////////////////////////
-    //  Function:
-    /////////////////////////////////////////////////////////////////
-    //
-    //  Purpose:
-    //
-    //  Arguments:
-    //
-    //  Returns:
-    //
-    //  Remarks:
-    //
-    /////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+// Function:
+/////////////////////////////////////////////////////////////////
+//
+// Purpose:
+//
+// Arguments:
+//
+// Returns:
+//
+// Remarks:
+//
+/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
