@@ -8,9 +8,8 @@ import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.DriveSubsystem;
 import java.util.function.Supplier;
 
-/** An example command that uses an example subsystem. */
 public class SwerveDriveCmd extends CommandBase {
-  //@SuppressWarnings({ "PMD.UnusedPrivateField", "PMD.SingularField" })
+  // @SuppressWarnings({ "PMD.UnusedPrivateField", "PMD.SingularField" })
 
   private final DriveSubsystem driveSubsystem;
   private final Supplier<Double> setDriveMotor, setTurnMotor;
