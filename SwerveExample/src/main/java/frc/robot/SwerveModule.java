@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
@@ -62,16 +64,17 @@ public class SwerveModule {
       int driveEncoderChannelB,
       int turningEncoderChannelA,
       int turningEncoderChannelB) {
-    m_driveMotor = new PWMSparkMax(driveMotorChannel);
-    m_turningMotor = new PWMSparkMax(turningMotorChannel);
+    m_driveMotor = new WPI_TalonFX(driveMotorChannel);
+    m_turningMotor = new WPI_TalonFX(turningMotorChannel);
 
-    m_driveEncoder = new Encoder(driveEncoderChannelA, driveEncoderChannelB);
-    m_turningEncoder = new Encoder(turningEncoderChannelA, turningEncoderChannelB);
+    //m_driveEncoder = new Encoder(driveEncoderChannelA, driveEncoderChannelB);
+    //m_turningEncoder = new Encoder(turningEncoderChannelA, turningEncoderChannelB);
 
     // Set the distance per pulse for the drive encoder. We can simply use the
     // distance traveled for one rotation of the wheel divided by the encoder
     // resolution.
-    m_driveEncoder.setDistancePerPulse(2 * Math.PI * kWheelRadius / kEncoderResolution);
+    m_driveMotor.setDistancePerPulse(2 * Math.PI * kWheelRadius / kEncoderResolution);
+    m_driveMotor.
 
     // Set the distance (in this case, angle) in radians per pulse for the turning encoder.
     // This is the the angle through an entire rotation (2 * pi) divided by the

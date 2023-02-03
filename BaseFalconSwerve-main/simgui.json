@@ -1,0 +1,36 @@
+{
+  "HALProvider": {
+    "Other Devices": {
+      "ADXRS450[0]": {
+        "header": {
+          "open": true
+        }
+      },
+      "DutyCycleEncoder[0]": {
+        "header": {
+          "open": true
+        }
+      },
+      "DutyCycleEncoder[1]": {
+        "header": {
+          "open": true
+        }
+      },
+      "DutyCycleEncoder[2]": {
+        "header": {
+          "open": true
+        }
+      },
+      "DutyCycleEncoder[3]": {
+        "header": {
+          "open": true
+        }
+      }
+    }
+  },
+  "NTProvider": {
+    "types": {
+      "/FMSInfo": "FMSInfo"
+    }
+  }
+}
