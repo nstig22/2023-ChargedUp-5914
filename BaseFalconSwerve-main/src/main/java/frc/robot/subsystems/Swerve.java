@@ -1,6 +1,10 @@
 package frc.robot.subsystems;
 
 import frc.robot.SwerveModule;
+import frc.robot.Constants.Swerve.Mod0;
+import frc.robot.Constants.Swerve.Mod1;
+import frc.robot.Constants.Swerve.Mod2;
+import frc.robot.Constants.Swerve.Mod3;
 import frc.robot.Constants;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -22,24 +26,26 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 public class Swerve extends SubsystemBase {
     public SwerveDriveOdometry swerveOdometry;
     public SwerveModule[] mSwerveMods;
-    //public Pigeon2 gyro;
+    // public Pigeon2 gyro;
     public ADXRS450_Gyro gyro;
 
     public Swerve() {
-        //gyro = new Pigeon2(Constants.Swerve.pigeonID);
+        // gyro = new Pigeon2(Constants.Swerve.pigeonID);
         gyro = new ADXRS450_Gyro();
-        //gyro.configFactoryDefault();
+        // gyro.configFactoryDefault();
         gyro.calibrate();
         zeroGyro();
 
         mSwerveMods = new SwerveModule[] {
-            new SwerveModule(0, Constants.Swerve.Mod0.constants, 0),
-            new SwerveModule(1, Constants.Swerve.Mod1.constants, 1),
-            new SwerveModule(2, Constants.Swerve.Mod2.constants, 2),
-            new SwerveModule(3, Constants.Swerve.Mod3.constants, 3)
+                new SwerveModule(0, Constants.Swerve.Mod0.constants, Mod0.magEncoderID),
+                new SwerveModule(1, Constants.Swerve.Mod1.constants, Mod1.magEncoderID),
+                new SwerveModule(2, Constants.Swerve.Mod2.constants, Mod2.magEncoderID),
+                new SwerveModule(3, Constants.Swerve.Mod3.constants, Mod3.magEncoderID)
         };
 
-        /* By pausing init for a second before setting module offsets, we avoid a bug with inverting motors.
+        /*
+         * By pausing init for a second before setting module offsets, we avoid a bug
+         * with inverting motors.
          * See https://github.com/Team364/BaseFalconSwerve/issues/8 for more info.
          */
         Timer.delay(1.0);
@@ -49,34 +55,31 @@ public class Swerve extends SubsystemBase {
     }
 
     public void drive(Translation2d translation, double rotation, boolean fieldRelative, boolean isOpenLoop) {
-        SwerveModuleState[] swerveModuleStates =
-            Constants.Swerve.swerveKinematics.toSwerveModuleStates(
+        SwerveModuleState[] swerveModuleStates = Constants.Swerve.swerveKinematics.toSwerveModuleStates(
                 fieldRelative ? ChassisSpeeds.fromFieldRelativeSpeeds(
-                                    translation.getX(), 
-                                    translation.getY(), 
-                                    rotation, 
-                                    getYaw()
-                                )
-                                : new ChassisSpeeds(
-                                    translation.getX(), 
-                                    translation.getY(), 
-                                    rotation)
-                                );
+                        translation.getX(),
+                        translation.getY(),
+                        rotation,
+                        getYaw())
+                        : new ChassisSpeeds(
+                                translation.getX(),
+                                translation.getY(),
+                                rotation));
         SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, Constants.Swerve.maxSpeed);
 
-        for(SwerveModule mod : mSwerveMods){
+        for (SwerveModule mod : mSwerveMods) {
             mod.setDesiredState(swerveModuleStates[mod.moduleNumber], isOpenLoop);
         }
-    }    
+    }
 
     /* Used by SwerveControllerCommand in Auto */
     public void setModuleStates(SwerveModuleState[] desiredStates) {
         SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, Constants.Swerve.maxSpeed);
-        
-        for(SwerveModule mod : mSwerveMods){
+
+        for (SwerveModule mod : mSwerveMods) {
             mod.setDesiredState(desiredStates[mod.moduleNumber], false);
         }
-    }    
+    }
 
     public Pose2d getPose() {
         return swerveOdometry.getPoseMeters();
@@ -86,45 +89,46 @@ public class Swerve extends SubsystemBase {
         swerveOdometry.resetPosition(getYaw(), getModulePositions(), pose);
     }
 
-    public SwerveModuleState[] getModuleStates(){
+    public SwerveModuleState[] getModuleStates() {
         SwerveModuleState[] states = new SwerveModuleState[4];
-        for(SwerveModule mod : mSwerveMods){
+        for (SwerveModule mod : mSwerveMods) {
             states[mod.moduleNumber] = mod.getState();
         }
         return states;
     }
 
-    public SwerveModulePosition[] getModulePositions(){
+    public SwerveModulePosition[] getModulePositions() {
         SwerveModulePosition[] positions = new SwerveModulePosition[4];
-        for(SwerveModule mod : mSwerveMods){
+        for (SwerveModule mod : mSwerveMods) {
             positions[mod.moduleNumber] = mod.getPosition();
         }
         return positions;
     }
 
-    public void zeroGyro(){
-        //gyro.setYaw(0);
+    public void zeroGyro() {
+        // gyro.setYaw(0);
         gyro.reset();
     }
 
     public Rotation2d getYaw() {
-        return (Constants.Swerve.invertGyro) ? Rotation2d.fromDegrees(360 - gyro.getAngle()) : Rotation2d.fromDegrees(gyro.getAngle());
+        return (Constants.Swerve.invertGyro) ? Rotation2d.fromDegrees(360 - gyro.getAngle())
+                : Rotation2d.fromDegrees(gyro.getAngle());
     }
 
-    public void resetModulesToAbsolute(){
-        for(SwerveModule mod : mSwerveMods){
+    public void resetModulesToAbsolute() {
+        for (SwerveModule mod : mSwerveMods) {
             mod.resetToAbsolute();
         }
     }
 
     @Override
-    public void periodic(){
-        swerveOdometry.update(getYaw(), getModulePositions());  
+    public void periodic() {
+        swerveOdometry.update(getYaw(), getModulePositions());
 
-        for(SwerveModule mod : mSwerveMods){
-            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Cancoder", mod.getCanCoder().getDegrees());
+        for (SwerveModule mod : mSwerveMods) {
+            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Mag Encoder", mod.getMagEncoder().getDegrees());
             SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Integrated", mod.getPosition().angle.getDegrees());
-            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);    
+            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);
         }
     }
 }

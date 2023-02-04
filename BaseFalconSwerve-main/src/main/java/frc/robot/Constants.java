@@ -7,23 +7,23 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
-import frc.lib.util.COTSFalconSwerveConstants;
+//import frc.lib.util.COTSFalconSwerveConstants;
 import frc.lib.util.SwerveModuleConstants;
 
 public final class Constants {
     public static final double stickDeadband = 0.1;
 
     public static final class Swerve {
-        public static final int pigeonID = 1;
+        //public static final int pigeonID = 1;
         public static final boolean invertGyro = false; // Always ensure Gyro is CCW+ CW-
 
-        public static final COTSFalconSwerveConstants chosenModule =  //TODO: This must be tuned to specific robot
-            COTSFalconSwerveConstants.SDSMK4i(COTSFalconSwerveConstants.driveGearRatios.SDSMK4i_L2);
+        /*public static final COTSFalconSwerveConstants chosenModule =  //TODO: This must be tuned to specific robot
+            COTSFalconSwerveConstants.SDSMK4i(COTSFalconSwerveConstants.driveGearRatios.SDSMK4i_L2);*/
 
         /* Drivetrain Constants */
-        public static final double trackWidth = Units.inchesToMeters(21.73); //TODO: This must be tuned to specific robot
-        public static final double wheelBase = Units.inchesToMeters(21.73); //TODO: This must be tuned to specific robot
-        public static final double wheelCircumference = chosenModule.wheelCircumference;
+        public static final double trackWidth = Units.inchesToMeters(24.5); //TODO: This must be updated when we have a robot to measure
+        public static final double wheelBase = Units.inchesToMeters(24.5); //TODO: This must be updated when we have a robot to measure
+        public static final double wheelCircumference = Units.inchesToMeters(4.0);
 
         /* Swerve Kinematics 
          * No need to ever change this unless you are not doing a traditional rectangular/square 4 module swerve */
@@ -34,15 +34,15 @@ public final class Constants {
             new Translation2d(-wheelBase / 2.0, -trackWidth / 2.0));
 
         /* Module Gear Ratios */
-        public static final double driveGearRatio = chosenModule.driveGearRatio;
-        public static final double angleGearRatio = chosenModule.angleGearRatio;
+        public static final double driveGearRatio = 999.999; //TODO: Set these ratios
+        public static final double angleGearRatio = 999.999; //TODO: Set these ratios 
 
         /* Motor Inverts */
-        public static final boolean angleMotorInvert = chosenModule.angleMotorInvert;
-        public static final boolean driveMotorInvert = chosenModule.driveMotorInvert;
+        public static final boolean angleMotorInvert = false;
+        public static final boolean driveMotorInvert = false;
 
         /* Angle Encoder Invert */
-        public static final boolean canCoderInvert = chosenModule.canCoderInvert;
+        public static final boolean magEncoderInvert = true;
 
         /* Swerve Current Limiting */
         public static final int angleContinuousCurrentLimit = 25;
@@ -61,10 +61,10 @@ public final class Constants {
         public static final double closedLoopRamp = 0.0;
 
         /* Angle Motor PID Values */
-        public static final double angleKP = chosenModule.angleKP;
-        public static final double angleKI = chosenModule.angleKI;
-        public static final double angleKD = chosenModule.angleKD;
-        public static final double angleKF = chosenModule.angleKF;
+        public static final double angleKP = 0.01;
+        public static final double angleKI = 0.0;
+        public static final double angleKD = 0.0;
+        public static final double angleKF = 0.0;
 
         /* Drive Motor PID Values */
         public static final double driveKP = 0.05; //TODO: This must be tuned to specific robot
@@ -93,40 +93,40 @@ public final class Constants {
         public static final class Mod0 { //TODO: This must be tuned to specific robot
             public static final int driveMotorID = 1;
             public static final int angleMotorID = 2;
-            public static final int canCoderID = 1;
+            public static final int magEncoderID = 1;
             public static final Rotation2d angleOffset = Rotation2d.fromDegrees(0.0);
             public static final SwerveModuleConstants constants = 
-                new SwerveModuleConstants(driveMotorID, angleMotorID, canCoderID, angleOffset);
+                new SwerveModuleConstants(driveMotorID, angleMotorID, magEncoderID, angleOffset);
         }
 
         /* Front Right Module - Module 1 */
         public static final class Mod1 { //TODO: This must be tuned to specific robot
             public static final int driveMotorID = 3;
             public static final int angleMotorID = 4;
-            public static final int canCoderID = 2;
+            public static final int magEncoderID = 2;
             public static final Rotation2d angleOffset = Rotation2d.fromDegrees(0.0);
             public static final SwerveModuleConstants constants = 
-                new SwerveModuleConstants(driveMotorID, angleMotorID, canCoderID, angleOffset);
+                new SwerveModuleConstants(driveMotorID, angleMotorID, magEncoderID, angleOffset);
         }
         
         /* Back Left Module - Module 2 */
         public static final class Mod2 { //TODO: This must be tuned to specific robot
             public static final int driveMotorID = 5;
             public static final int angleMotorID = 6;
-            public static final int canCoderID = 3;
+            public static final int magEncoderID = 3;
             public static final Rotation2d angleOffset = Rotation2d.fromDegrees(0.0);
             public static final SwerveModuleConstants constants = 
-                new SwerveModuleConstants(driveMotorID, angleMotorID, canCoderID, angleOffset);
+                new SwerveModuleConstants(driveMotorID, angleMotorID, magEncoderID, angleOffset);
         }
 
         /* Back Right Module - Module 3 */
         public static final class Mod3 { //TODO: This must be tuned to specific robot
             public static final int driveMotorID = 7;
             public static final int angleMotorID = 8;
-            public static final int canCoderID = 4;
+            public static final int magEncoderID = 4;
             public static final Rotation2d angleOffset = Rotation2d.fromDegrees(0.0);
             public static final SwerveModuleConstants constants = 
-                new SwerveModuleConstants(driveMotorID, angleMotorID, canCoderID, angleOffset);
+                new SwerveModuleConstants(driveMotorID, angleMotorID, magEncoderID, angleOffset);
         }
     }
 
