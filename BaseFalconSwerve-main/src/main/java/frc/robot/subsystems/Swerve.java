@@ -6,13 +6,14 @@ import frc.robot.Constants.Swerve.Mod1;
 import frc.robot.Constants.Swerve.Mod2;
 import frc.robot.Constants.Swerve.Mod3;
 import frc.robot.Constants;
-
+import frc.robot.Robot;
+import frc.robot.RobotContainer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 
-//import com.ctre.phoenix.sensors.Pigeon2;
+import com.ctre.phoenix.sensors.Pigeon2;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -26,13 +27,13 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 public class Swerve extends SubsystemBase {
     public SwerveDriveOdometry swerveOdometry;
     public SwerveModule[] mSwerveMods;
-    // public Pigeon2 gyro;
+     //public Pigeon2 gyro1;
     public ADXRS450_Gyro gyro;
 
     public Swerve() {
         // gyro = new Pigeon2(Constants.Swerve.pigeonID);
         gyro = new ADXRS450_Gyro();
-        // gyro.configFactoryDefault();
+         //gyro1.configFactoryDefault();
         gyro.calibrate();
         zeroGyro();
 
@@ -113,6 +114,7 @@ public class Swerve extends SubsystemBase {
     public Rotation2d getYaw() {
         return (Constants.Swerve.invertGyro) ? Rotation2d.fromDegrees(360 - gyro.getAngle())
                 : Rotation2d.fromDegrees(gyro.getAngle());
+        //return Rotation2d.fromDegrees(180);
     }
 
     public void resetModulesToAbsolute() {
@@ -130,5 +132,9 @@ public class Swerve extends SubsystemBase {
             SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Integrated", mod.getPosition().angle.getDegrees());
             SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);
         }
+        SmartDashboard.putNumber("Gyro angle ", (360 - gyro.getAngle()));
+        //SmartDashboard.putNumber("Left stick x ", getTranslationAxis());
+        //SmartDashboard.putNumber("Left stick y ", 0);
+        //SmartDashboard.putNumber("Right stick x ", 0);
     }
 }

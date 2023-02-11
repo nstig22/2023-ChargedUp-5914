@@ -17,6 +17,8 @@ public class SwerveModule {
     public int moduleNumber;
     private Rotation2d angleOffset;
     private Rotation2d lastAngle;
+    //FIXME
+    private Rotation2d error;
 
     private TalonFX mAngleMotor;
     private TalonFX mDriveMotor;
@@ -69,8 +71,8 @@ public class SwerveModule {
     }
 
     private void setAngle(SwerveModuleState desiredState) {
-        Rotation2d angle = (Math.abs(desiredState.speedMetersPerSecond) <= (Constants.Swerve.maxSpeed * 0.01))
-                ? lastAngle
+        Rotation2d angle = (Math.abs(desiredState.speedMetersPerSecond) <= (Constants.Swerve.maxSpeed * 0.01)) //FIXME
+                ? (lastAngle)
                 : desiredState.angle; // Prevent rotating module if speed is less then 1%. Prevents Jittering.
 
         mAngleMotor.set(ControlMode.Position,

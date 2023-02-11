@@ -29,6 +29,11 @@ public class TeleopSwerve extends CommandBase {
     }
 
     @Override
+    public void initialize(){
+        //asdf
+    }
+
+    @Override
     public void execute() {
         /* Get Values, Deadband*/
         double translationVal = MathUtil.applyDeadband(translationSup.getAsDouble(), Constants.stickDeadband);

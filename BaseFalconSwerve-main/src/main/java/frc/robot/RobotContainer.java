@@ -1,5 +1,7 @@
 package frc.robot;
 
+import java.util.function.DoubleSupplier;
+
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PS4Controller;
@@ -33,6 +35,7 @@ public class RobotContainer {
     /* Driver Buttons */
     private final JoystickButton zeroGyro = new JoystickButton(stick, PS4Controller.Button.kTriangle.value);
     private final JoystickButton robotCentric = new JoystickButton(stick, PS4Controller.Button.kL1.value);
+    private final JoystickButton resetModules = new JoystickButton(stick, PS4Controller.Button.kSquare.value);
 
     /* Subsystems */
     private final Swerve s_Swerve = new Swerve();
@@ -53,6 +56,11 @@ public class RobotContainer {
         configureButtonBindings();
     }
 
+    public DoubleSupplier getTranslationAxis(){
+        DoubleSupplier stickSupplier = () -> translationAxis;
+        return stickSupplier;
+    }
+
     /**
      * Use this method to define your button->command mappings. Buttons can be
      * created by
@@ -64,6 +72,8 @@ public class RobotContainer {
     private void configureButtonBindings() {
         /* Driver Buttons */
         zeroGyro.onTrue(new InstantCommand(() -> s_Swerve.zeroGyro()));
+
+        resetModules.onTrue(new InstantCommand(() -> s_Swerve.resetModulesToAbsolute()));
     }
 
     /**
