@@ -56,7 +56,7 @@ public class RobotContainer {
         configureButtonBindings();
     }
 
-    public DoubleSupplier getTranslationAxis(){
+    public DoubleSupplier getTranslationAxis() {
         DoubleSupplier stickSupplier = () -> translationAxis;
         return stickSupplier;
     }

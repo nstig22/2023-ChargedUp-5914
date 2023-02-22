@@ -18,7 +18,7 @@ public class SwerveModule {
     private Rotation2d angleOffset;
     private Rotation2d lastAngle;
     //FIXME
-    private Rotation2d error;
+    //private Rotation2d error;
 
     private TalonFX mAngleMotor;
     private TalonFX mDriveMotor;
