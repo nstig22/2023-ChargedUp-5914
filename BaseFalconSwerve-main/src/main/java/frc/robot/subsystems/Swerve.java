@@ -6,14 +6,10 @@ import frc.robot.Constants.Swerve.Mod1;
 import frc.robot.Constants.Swerve.Mod2;
 import frc.robot.Constants.Swerve.Mod3;
 import frc.robot.Constants;
-//import frc.robot.Robot;
-//import frc.robot.RobotContainer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
-
-//import com.ctre.phoenix.sensors.Pigeon2;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -27,13 +23,13 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 public class Swerve extends SubsystemBase {
     public SwerveDriveOdometry swerveOdometry;
     public SwerveModule[] mSwerveMods;
-     //public Pigeon2 gyro1;
+    // public Pigeon2 gyro1;
     public ADXRS450_Gyro gyro;
 
     public Swerve() {
         // gyro = new Pigeon2(Constants.Swerve.pigeonID);
         gyro = new ADXRS450_Gyro();
-         //gyro1.configFactoryDefault();
+        // gyro1.configFactoryDefault();
         gyro.calibrate();
         zeroGyro();
 
@@ -61,11 +57,12 @@ public class Swerve extends SubsystemBase {
                         translation.getX(),
                         translation.getY(),
                         rotation,
-                        getYaw())
+                        getYaw()) //FIXME add a print statement that says we're using field relative controls somehow
                         : new ChassisSpeeds(
                                 translation.getX(),
                                 translation.getY(),
                                 rotation));
+                                System.out.println("\nUsing robot centric controls.\n");
         SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, Constants.Swerve.maxSpeed);
 
         for (SwerveModule mod : mSwerveMods) {
@@ -109,17 +106,28 @@ public class Swerve extends SubsystemBase {
     public void zeroGyro() {
         // gyro.setYaw(0);
         gyro.reset();
+
+        System.out.println("\nGyro reset to zero.\n"); //FIXME
     }
 
     public Rotation2d getYaw() {
         return (Constants.Swerve.invertGyro) ? Rotation2d.fromDegrees(360 - gyro.getAngle())
                 : Rotation2d.fromDegrees(gyro.getAngle());
-        //return Rotation2d.fromDegrees(180);
+        // return Rotation2d.fromDegrees(180);
     }
 
     public void resetModulesToAbsolute() {
         for (SwerveModule mod : mSwerveMods) {
             mod.resetToAbsolute();
+            System.out.println("\nModule " + mod.moduleNumber + " reset to absolute.\n"); //FIXME
+        }
+    }
+
+    public void zeroModules(){
+        for (SwerveModule mod : mSwerveMods){
+            mod.setDesiredState(new SwerveModuleState(), false);
+            mod.resetToAbsolute();
+            //mod.mAngleMotor.set(ControlMode.Position.fromDegrees(0));
         }
     }
 
@@ -133,8 +141,8 @@ public class Swerve extends SubsystemBase {
             SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);
         }
         SmartDashboard.putNumber("Gyro angle ", (360 - gyro.getAngle()));
-        //SmartDashboard.putNumber("Left stick x ", getTranslationAxis());
-        //SmartDashboard.putNumber("Left stick y ", 0);
-        //SmartDashboard.putNumber("Right stick x ", 0);
+        // SmartDashboard.putNumber("Left stick x ", getTranslationAxis());
+        // SmartDashboard.putNumber("Left stick y ", 0);
+        // SmartDashboard.putNumber("Right stick x ", 0);
     }
 }

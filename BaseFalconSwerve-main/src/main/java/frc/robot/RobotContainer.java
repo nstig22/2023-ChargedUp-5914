@@ -1,7 +1,5 @@
 package frc.robot;
 
-import java.util.function.DoubleSupplier;
-
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PS4Controller;
@@ -28,17 +26,22 @@ public class RobotContainer {
     private final Joystick stick = new Joystick(0);
 
     /* Drive Controls */
-    private final int translationAxis = PS4Controller.Axis.kLeftY.value;
-    private final int strafeAxis = PS4Controller.Axis.kLeftX.value;
-    private final int rotationAxis = PS4Controller.Axis.kRightX.value;
+    private final int leftStickX = PS4Controller.Axis.kLeftX.value;
+    private final int leftStickY = PS4Controller.Axis.kLeftY.value;
+    private final int rightStickX = PS4Controller.Axis.kRightX.value;
+    private final int rightStickY = PS4Controller.Axis.kRightY.value;
 
     /* Driver Buttons */
-    private final JoystickButton zeroGyro = new JoystickButton(stick, PS4Controller.Button.kTriangle.value);
-    private final JoystickButton robotCentric = new JoystickButton(stick, PS4Controller.Button.kL1.value);
-    private final JoystickButton resetModules = new JoystickButton(stick, PS4Controller.Button.kSquare.value);
+    private final JoystickButton square = new JoystickButton(stick, PS4Controller.Button.kSquare.value);
+    private final JoystickButton cross = new JoystickButton(stick, PS4Controller.Button.kCross.value);
+    private final JoystickButton circle = new JoystickButton(stick, PS4Controller.Button.kCircle.value);
+    private final JoystickButton triangle = new JoystickButton(stick, PS4Controller.Button.kTriangle.value);
+    private final JoystickButton leftBumper = new JoystickButton(stick, PS4Controller.Button.kL1.value);
+    private final JoystickButton rightBumper = new JoystickButton(stick, PS4Controller.Button.kR1.value);
 
     /* Subsystems */
     private final Swerve s_Swerve = new Swerve();
+    private final Arm arm = new Arm();
 
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -47,18 +50,13 @@ public class RobotContainer {
         s_Swerve.setDefaultCommand(
                 new TeleopSwerve(
                         s_Swerve,
-                        () -> -stick.getRawAxis(translationAxis),
-                        () -> -stick.getRawAxis(strafeAxis),
-                        () -> -stick.getRawAxis(rotationAxis),
-                        () -> robotCentric.getAsBoolean()));
+                        () -> -stick.getRawAxis(leftStickY),
+                        () -> -stick.getRawAxis(leftStickX),
+                        () -> -stick.getRawAxis(rightStickX),
+                        () -> leftBumper.getAsBoolean()));
 
         // Configure the button bindings
         configureButtonBindings();
-    }
-
-    public DoubleSupplier getTranslationAxis() {
-        DoubleSupplier stickSupplier = () -> translationAxis;
-        return stickSupplier;
     }
 
     /**
@@ -71,9 +69,14 @@ public class RobotContainer {
      */
     private void configureButtonBindings() {
         /* Driver Buttons */
-        zeroGyro.onTrue(new InstantCommand(() -> s_Swerve.zeroGyro()));
+        triangle.onTrue(new InstantCommand(() -> s_Swerve.zeroGyro()));
 
-        resetModules.onTrue(new InstantCommand(() -> s_Swerve.resetModulesToAbsolute()));
+        square.onTrue(new InstantCommand(() -> s_Swerve.resetModulesToAbsolute()));
+
+        rightBumper.onTrue(new ArmJoystick(arm, s_Swerve, () -> -stick.getRawAxis(leftStickY),
+                () -> -stick.getRawAxis(rightStickY), () -> cross.getAsBoolean()));
+
+        circle.onTrue(new InstantCommand(() -> s_Swerve.zeroModules()));
     }
 
     /**

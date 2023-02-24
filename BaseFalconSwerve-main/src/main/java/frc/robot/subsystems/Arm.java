@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import java.util.function.BooleanSupplier;
+
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 
@@ -11,7 +13,6 @@ import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.RobotContainer;
 
 public class Arm extends SubsystemBase {
     // Motors
@@ -45,18 +46,10 @@ public class Arm extends SubsystemBase {
         lowerArmMotor.setInverted(false);
     }
 
-    // Switch to arm mode
-    public void armMode() {
-
-    }
-
     // Set motor values
-    public void setUpperMotor(double power) {
-        upperArmMotor.set(ControlMode.PercentOutput, power);
-    }
-
-    public void setLowerMotor(double power) {
-        lowerArmMotor.set(ControlMode.PercentOutput, power);
+    public void setMotors(double upperPower, double lowerPower) {
+        upperArmMotor.set(ControlMode.PercentOutput, upperPower);
+        lowerArmMotor.set(ControlMode.PercentOutput, lowerPower);
     }
 
     // Get encoder values
@@ -69,11 +62,7 @@ public class Arm extends SubsystemBase {
     }
 
     // Set pneumatics
-    public void openClaw() {
-        armSolenoid.set(Value.kForward);
-    }
-
-    public void closeClaw() {
-        armSolenoid.set(Value.kReverse);
+    public void toggleClaw(BooleanSupplier state) {
+        armSolenoid.toggle();
     }
 }
