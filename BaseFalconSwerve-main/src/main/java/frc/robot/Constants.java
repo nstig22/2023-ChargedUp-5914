@@ -154,5 +154,9 @@ public final class Constants {
         //Mag encoder IDs
         public static final int upperArmEncoderID = 4;
         public static final int lowerArmEncoderID = 5;
+
+        //Pneumatics IDs
+        public static final int pHubID = 8;
+        public static final int compID = 8;
     }
 }

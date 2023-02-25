@@ -26,7 +26,6 @@ public class ArmJoystick extends CommandBase {
 
     @Override
     public void initialize() {
-
     }
 
     @Override
