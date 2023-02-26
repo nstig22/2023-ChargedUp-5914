@@ -52,7 +52,7 @@ public class Arm extends SubsystemBase {
 
         armSolenoid = new DoubleSolenoid(PneumaticsModuleType.REVPH, 0, 1);
 
-        comp.enableAnalog(115, 120);
+        comp.enableAnalog(110, 120);
     }
 
     // Set motor values
@@ -73,6 +73,7 @@ public class Arm extends SubsystemBase {
     // Set pneumatics
     public void toggleClaw(BooleanSupplier state) {
         armSolenoid.toggle();
+        System.out.println("\nClaw toggled.\n");
     }
 
     @Override
