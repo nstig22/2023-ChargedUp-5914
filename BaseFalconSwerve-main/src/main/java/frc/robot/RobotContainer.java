@@ -69,14 +69,16 @@ public class RobotContainer {
      */
     private void configureButtonBindings() {
         /* Driver Buttons */
-        triangle.onTrue(new InstantCommand(() -> s_Swerve.zeroGyro()));
-
         square.onTrue(new InstantCommand(() -> s_Swerve.resetModulesToAbsolute()));
 
-        rightBumper.onTrue(new ArmJoystick(arm, s_Swerve, () -> -stick.getRawAxis(leftStickY),
-                () -> -stick.getRawAxis(rightStickY), () -> cross.getAsBoolean()));
+        cross.onTrue(new InstantCommand(() -> arm.toggleClaw(cross)));
 
         circle.onTrue(new InstantCommand(() -> s_Swerve.zeroModules()));
+
+        triangle.onTrue(new InstantCommand(() -> s_Swerve.zeroGyro()));
+
+        rightBumper.onTrue(new ArmJoystick(arm, s_Swerve, () -> -stick.getRawAxis(leftStickY),
+                () -> -stick.getRawAxis(rightStickY)));
     }
 
     /**

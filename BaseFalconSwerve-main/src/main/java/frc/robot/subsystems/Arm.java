@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.PneumaticHub;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.smartdashboard.*;
 import frc.robot.Constants;
@@ -50,7 +51,10 @@ public class Arm extends SubsystemBase {
 
         pHub = new PneumaticHub(Constants.Arm.pHubID);
 
-        armSolenoid = new DoubleSolenoid(PneumaticsModuleType.REVPH, 0, 1);
+        armSolenoid = new DoubleSolenoid(PneumaticsModuleType.REVPH, 1, 2);
+
+        //Start with claw closed, unless reverse is open FIXME
+        armSolenoid.set(Value.kReverse);
 
         comp.enableAnalog(110, 120);
     }
@@ -72,8 +76,13 @@ public class Arm extends SubsystemBase {
 
     // Set pneumatics
     public void toggleClaw(BooleanSupplier state) {
-        armSolenoid.toggle();
-        System.out.println("\nClaw toggled.\n");
+        if (state.getAsBoolean() == true){
+            armSolenoid.set(Value.kForward);
+        }
+        else {
+            armSolenoid.set(Value.kReverse);
+        }
+        System.out.println("\nClaw toggled.\n"); //FIXME Debug code
     }
 
     @Override

@@ -11,15 +11,14 @@ public class ArmJoystick extends CommandBase {
     private final Arm arm;
     private final Swerve swerve;
     private final DoubleSupplier setUpperMotor, setLowerMotor;
-    private final BooleanSupplier clawPos;
+    //private final BooleanSupplier clawPos;
 
-    public ArmJoystick(Arm arm, Swerve swerve, DoubleSupplier setUpperMotor, DoubleSupplier setLowerMotor,
-            BooleanSupplier clawPos) {
+    public ArmJoystick(Arm arm, Swerve swerve, DoubleSupplier setUpperMotor, DoubleSupplier setLowerMotor) {
         this.arm = arm;
         this.swerve = swerve;
         this.setUpperMotor = setUpperMotor;
         this.setLowerMotor = setLowerMotor;
-        this.clawPos = clawPos;
+        //this.clawPos = clawPos;
 
         addRequirements(arm, swerve);
     }
@@ -35,7 +34,8 @@ public class ArmJoystick extends CommandBase {
 
         arm.setMotors(upperPower, lowerPower);
 
-        arm.toggleClaw(clawPos);
+
+        //arm.toggleClaw(clawPos);
     }
 
     @Override

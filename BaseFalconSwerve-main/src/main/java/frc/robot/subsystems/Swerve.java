@@ -57,12 +57,12 @@ public class Swerve extends SubsystemBase {
                         translation.getX(),
                         translation.getY(),
                         rotation,
-                        getYaw()) //FIXME add a print statement that says we're using field relative controls somehow
+                        getYaw()) // FIXME add a print statement that says we're using field relative controls
+                                  // somehow
                         : new ChassisSpeeds(
                                 translation.getX(),
                                 translation.getY(),
                                 rotation));
-                                System.out.println("\nUsing robot centric controls.\n");
         SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, Constants.Swerve.maxSpeed);
 
         for (SwerveModule mod : mSwerveMods) {
@@ -107,7 +107,7 @@ public class Swerve extends SubsystemBase {
         // gyro.setYaw(0);
         gyro.reset();
 
-        System.out.println("\nGyro reset to zero.\n"); //FIXME
+        System.out.println("\nGyro reset to zero.\n"); // FIXME
     }
 
     public Rotation2d getYaw() {
@@ -119,15 +119,15 @@ public class Swerve extends SubsystemBase {
     public void resetModulesToAbsolute() {
         for (SwerveModule mod : mSwerveMods) {
             mod.resetToAbsolute();
-            System.out.println("\nModule " + mod.moduleNumber + " reset to absolute.\n"); //FIXME
+            System.out.println("\nModule " + mod.moduleNumber + " reset to absolute.\n"); // FIXME
         }
     }
 
-    public void zeroModules(){
-        for (SwerveModule mod : mSwerveMods){
-            mod.setDesiredState(new SwerveModuleState(), false);
+    public void zeroModules() {
+        for (SwerveModule mod : mSwerveMods) {
+            mod.setDesiredState(new SwerveModuleState(0, new Rotation2d(0)), false);
             mod.resetToAbsolute();
-            //mod.mAngleMotor.set(ControlMode.Position.fromDegrees(0));
+            // mod.mAngleMotor.set(ControlMode.Position.fromDegrees(0));
         }
     }
 
