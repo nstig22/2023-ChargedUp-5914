@@ -94,11 +94,11 @@ public class SwerveModule {
     }
 
     /*
-     * private void configAngleEncoder(){
-     * //angleEncoder.configFactoryDefault();
+     * private void configAngleEncoder() {
+     * // angleEncoder.configFactoryDefault();
      * angleEncoder.reset();
      * 
-     * //angleEncoder.configAllSettings(Robot.ctreConfigs.swerveCanCoderConfig);
+     * // angleEncoder.configAllSettings(Robot.ctreConfigs.swerveCanCoderConfig);
      * }
      */
 

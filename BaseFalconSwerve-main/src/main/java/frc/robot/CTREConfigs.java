@@ -46,9 +46,9 @@ public final class CTREConfigs {
         swerveDriveFXConfig.closedloopRamp = Constants.Swerve.closedLoopRamp;
         
         /* Swerve CANCoder Configuration */
-        swerveCanCoderConfig.absoluteSensorRange = AbsoluteSensorRange.Unsigned_0_to_360;
+        /*swerveCanCoderConfig.absoluteSensorRange = AbsoluteSensorRange.Unsigned_0_to_360;
         swerveCanCoderConfig.sensorDirection = Constants.Swerve.magEncoderInvert;
         swerveCanCoderConfig.initializationStrategy = SensorInitializationStrategy.BootToAbsolutePosition;
-        swerveCanCoderConfig.sensorTimeBase = SensorTimeBase.PerSecond;
+        swerveCanCoderConfig.sensorTimeBase = SensorTimeBase.PerSecond;*/
     }
 }
