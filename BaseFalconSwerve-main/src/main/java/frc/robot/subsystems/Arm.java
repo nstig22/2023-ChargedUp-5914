@@ -67,11 +67,17 @@ public class Arm extends SubsystemBase {
 
     // Get encoder values
     public double getUpperArmEncoder() {
-        return upperArmEncoder.getAbsolutePosition();
+        return (upperArmEncoder.getAbsolutePosition() - Constants.Arm.upperArmEncoderOffset);
     }
 
     public double getLowerArmEncoder() {
-        return lowerArmEncoder.getAbsolutePosition();
+        return (lowerArmEncoder.getAbsolutePosition() - Constants.Arm.lowerArmEncoderOffset);
+    }
+
+    //Reset falcon encoders
+    public void resetMagEncoders(){
+        upperArmMotor.setSelectedSensorPosition(getUpperArmEncoder());
+        lowerArmMotor.setSelectedSensorPosition(getLowerArmEncoder());
     }
 
     // Set pneumatics
@@ -88,7 +94,7 @@ public class Arm extends SubsystemBase {
 
     @Override
     public void periodic() {
-        SmartDashboard.putNumber("Upper Arm Encoder Value ", upperArmEncoder.getAbsolutePosition());
-        SmartDashboard.putNumber("Lower Arm Encoder Value ", lowerArmEncoder.getAbsolutePosition());
+        SmartDashboard.putNumber("Upper Arm Encoder Value ", (upperArmEncoder.getAbsolutePosition() * 360));
+        SmartDashboard.putNumber("Lower Arm Encoder Value ", (lowerArmEncoder.getAbsolutePosition() * 360));
     }
 }
