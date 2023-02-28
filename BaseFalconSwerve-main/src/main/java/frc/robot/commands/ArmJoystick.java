@@ -1,26 +1,21 @@
 package frc.robot.commands;
 
-import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
-import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Arm;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 
 public class ArmJoystick extends CommandBase {
     private final Arm arm;
-    private final Swerve swerve;
-    private final DoubleSupplier setUpperMotor, setLowerMotor;
-    //private final BooleanSupplier clawPos;
+    private final DoubleSupplier setUpperMotor, setLowerMotor, setLowerMotor2;
 
-    public ArmJoystick(Arm arm, Swerve swerve, DoubleSupplier setUpperMotor, DoubleSupplier setLowerMotor) {
+    public ArmJoystick(Arm arm, DoubleSupplier setUpperMotor, DoubleSupplier setLowerMotor, DoubleSupplier setLowerMotor2) {
         this.arm = arm;
-        this.swerve = swerve;
         this.setUpperMotor = setUpperMotor;
         this.setLowerMotor = setLowerMotor;
-        //this.clawPos = clawPos;
+        this.setLowerMotor2 = setLowerMotor2;
 
-        addRequirements(arm, swerve);
+        addRequirements(arm);
     }
 
     @Override
@@ -29,8 +24,8 @@ public class ArmJoystick extends CommandBase {
 
     @Override
     public void execute() {
-        double upperPower = setUpperMotor.getAsDouble();
-        double lowerPower = setLowerMotor.getAsDouble();
+        double upperPower = -setUpperMotor.getAsDouble();
+        double lowerPower = (-setLowerMotor.getAsDouble() - setLowerMotor2.getAsDouble());
 
         arm.setMotors(upperPower, lowerPower);
 

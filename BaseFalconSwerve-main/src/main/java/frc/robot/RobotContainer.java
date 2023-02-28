@@ -30,6 +30,8 @@ public class RobotContainer {
     private final int leftStickY = PS4Controller.Axis.kLeftY.value;
     private final int rightStickX = PS4Controller.Axis.kRightX.value;
     private final int rightStickY = PS4Controller.Axis.kRightY.value;
+    private final int leftTrigger = PS4Controller.Axis.kL2.value;
+    private final int rightTrigger = PS4Controller.Axis.kR2.value;
 
     /* Driver Buttons */
     private final JoystickButton square = new JoystickButton(stick, PS4Controller.Button.kSquare.value);
@@ -37,7 +39,7 @@ public class RobotContainer {
     private final JoystickButton circle = new JoystickButton(stick, PS4Controller.Button.kCircle.value);
     private final JoystickButton triangle = new JoystickButton(stick, PS4Controller.Button.kTriangle.value);
     private final JoystickButton leftBumper = new JoystickButton(stick, PS4Controller.Button.kL1.value);
-    private final JoystickButton rightBumper = new JoystickButton(stick, PS4Controller.Button.kR1.value);
+    //private final JoystickButton rightBumper = new JoystickButton(stick, PS4Controller.Button.kR1.value);
 
     /* Subsystems */
     private final Swerve s_Swerve = new Swerve();
@@ -54,6 +56,9 @@ public class RobotContainer {
                         () -> -stick.getRawAxis(leftStickX),
                         () -> -stick.getRawAxis(rightStickX),
                         () -> leftBumper.getAsBoolean()));
+
+        arm.setDefaultCommand(new ArmJoystick(arm, () -> stick.getRawAxis(rightStickY), () -> stick.getRawAxis(leftTrigger),
+        () -> -stick.getRawAxis(rightTrigger)));
 
         // Configure the button bindings
         configureButtonBindings();
@@ -77,8 +82,8 @@ public class RobotContainer {
 
         triangle.onTrue(new InstantCommand(() -> s_Swerve.zeroGyro()));
 
-        rightBumper.onTrue(new ArmJoystick(arm, s_Swerve, () -> -stick.getRawAxis(leftStickY),
-                () -> -stick.getRawAxis(rightStickY)));
+        /*rightBumper.onTrue(new ArmJoystick(arm, () -> -stick.getRawAxis(leftTrigger), () -> stick.getRawAxis(rightTrigger),
+                () -> -stick.getRawAxis(rightStickY));*/
     }
 
     /**

@@ -21,8 +21,8 @@ public final class Constants {
             COTSFalconSwerveConstants.SDSMK4i(COTSFalconSwerveConstants.driveGearRatios.SDSMK4i_L2);*/
 
         /* Drivetrain Constants */
-        public static final double trackWidth = Units.inchesToMeters(24.5); //TODO: This must be updated when we have a robot to measure
-        public static final double wheelBase = Units.inchesToMeters(24.5); //TODO: This must be updated when we have a robot to measure
+        public static final double trackWidth = Units.inchesToMeters(24.25); //TODO: This must be updated when we have a robot to measure
+        public static final double wheelBase = Units.inchesToMeters(24.25); //TODO: This must be updated when we have a robot to measure
         public static final double wheelCircumference = Units.inchesToMeters(4.0);
 
         /* Swerve Kinematics 
@@ -34,8 +34,8 @@ public final class Constants {
             new Translation2d(-wheelBase / 2.0, -trackWidth / 2.0));
 
         /* Module Gear Ratios */
-        public static final double driveGearRatio = (8.41 / 1.0);
-        public static final double angleGearRatio = (36.57 / 1.0);
+        public static final double driveGearRatio = (6.74 / 1.0);
+        public static final double angleGearRatio = (33.68 / 1.0);
 
         /* Motor Inverts */
         public static final boolean angleMotorInvert = false;
@@ -74,9 +74,9 @@ public final class Constants {
 
         /* Drive Motor Characterization Values 
          * Divide SYSID values by 12 to convert from volts to percent output for CTRE */
-        public static final double driveKS = (0.32 / 12); //TODO: This must be tuned to specific robot
-        public static final double driveKV = (1.51 / 12);
-        public static final double driveKA = (0.27 / 12);
+        public static final double driveKS = (0.24002 / 12); //TODO: This must be tuned to specific robot
+        public static final double driveKV = (0.0011344 / 12);
+        public static final double driveKA = (0.00020356 / 12);
 
         /* Swerve Profiling Values */
         /** Meters per Second */
@@ -160,7 +160,7 @@ public final class Constants {
         public static final int lowerArmEncoderID = 5;
 
         //Pneumatics IDs
-        public static final int pHubID = 8;
-        public static final int compID = 8;
+        public static final int pHubID = 11;
+        public static final int compID = 11;
     }
 }

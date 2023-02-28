@@ -51,10 +51,10 @@ public class Arm extends SubsystemBase {
 
         pHub = new PneumaticHub(Constants.Arm.pHubID);
 
-        armSolenoid = new DoubleSolenoid(PneumaticsModuleType.REVPH, 1, 2);
+        armSolenoid = new DoubleSolenoid(11, PneumaticsModuleType.REVPH, 1, 2);
 
         //Start with claw closed, unless reverse is open FIXME
-        armSolenoid.set(Value.kReverse);
+        armSolenoid.set(Value.kForward);
 
         comp.enableAnalog(110, 120);
     }
@@ -76,12 +76,13 @@ public class Arm extends SubsystemBase {
 
     // Set pneumatics
     public void toggleClaw(BooleanSupplier state) {
-        if (state.getAsBoolean() == true){
+        /*if (state.getAsBoolean() == true){
             armSolenoid.set(Value.kForward);
         }
         else {
             armSolenoid.set(Value.kReverse);
-        }
+        }*/
+        armSolenoid.toggle();
         System.out.println("\nClaw toggled.\n"); //FIXME Debug code
     }
 
