@@ -53,7 +53,6 @@ public class Arm extends SubsystemBase {
 
         armSolenoid = new DoubleSolenoid(11, PneumaticsModuleType.REVPH, 1, 2);
 
-        //Start with claw closed, unless reverse is open FIXME
         armSolenoid.set(Value.kForward);
 
         comp.enableAnalog(110, 120);
@@ -74,22 +73,24 @@ public class Arm extends SubsystemBase {
         return (lowerArmEncoder.getAbsolutePosition() - Constants.Arm.lowerArmEncoderOffset);
     }
 
-    //Reset falcon encoders
-    public void resetMagEncoders(){
+    // Reset falcon encoders
+    public void resetMagEncoders() {
         upperArmMotor.setSelectedSensorPosition(getUpperArmEncoder());
         lowerArmMotor.setSelectedSensorPosition(getLowerArmEncoder());
     }
 
     // Set pneumatics
     public void toggleClaw(BooleanSupplier state) {
-        /*if (state.getAsBoolean() == true){
-            armSolenoid.set(Value.kForward);
-        }
-        else {
-            armSolenoid.set(Value.kReverse);
-        }*/
+        /*
+         * if (state.getAsBoolean() == true){
+         * armSolenoid.set(Value.kForward);
+         * }
+         * else {
+         * armSolenoid.set(Value.kReverse);
+         * }
+         */
         armSolenoid.toggle();
-        System.out.println("\nClaw toggled.\n"); //FIXME Debug code
+        System.out.println("\nClaw toggled.\n"); // FIXME Debug code
     }
 
     @Override

@@ -1,11 +1,12 @@
 package frc.robot.commands;
+
 import frc.robot.subsystems.Arm;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 
 public class ArmPID extends CommandBase {
     private final Arm arm;
 
-    ArmPID(Arm arm){
+    ArmPID(Arm arm) {
         this.arm = arm;
 
         addRequirements(arm);
@@ -13,6 +14,7 @@ public class ArmPID extends CommandBase {
 
     @Override
     public void initialize() {
+        arm.resetMagEncoders();
     }
 
     @Override

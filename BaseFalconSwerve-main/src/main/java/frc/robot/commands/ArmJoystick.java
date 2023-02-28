@@ -9,7 +9,8 @@ public class ArmJoystick extends CommandBase {
     private final Arm arm;
     private final DoubleSupplier setUpperMotor, setLowerMotor, setLowerMotor2;
 
-    public ArmJoystick(Arm arm, DoubleSupplier setUpperMotor, DoubleSupplier setLowerMotor, DoubleSupplier setLowerMotor2) {
+    public ArmJoystick(Arm arm, DoubleSupplier setUpperMotor, DoubleSupplier setLowerMotor,
+            DoubleSupplier setLowerMotor2) {
         this.arm = arm;
         this.setUpperMotor = setUpperMotor;
         this.setLowerMotor = setLowerMotor;
@@ -29,8 +30,7 @@ public class ArmJoystick extends CommandBase {
 
         arm.setMotors(upperPower, lowerPower);
 
-
-        //arm.toggleClaw(clawPos);
+        // arm.toggleClaw(clawPos);
     }
 
     @Override
