@@ -1,9 +1,7 @@
 package frc.robot;
 
-import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PS4Controller;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
@@ -39,8 +37,7 @@ public class RobotContainer {
     private final JoystickButton circle = new JoystickButton(stick, PS4Controller.Button.kCircle.value);
     private final JoystickButton triangle = new JoystickButton(stick, PS4Controller.Button.kTriangle.value);
     private final JoystickButton leftBumper = new JoystickButton(stick, PS4Controller.Button.kL1.value);
-    // private final JoystickButton rightBumper = new JoystickButton(stick,
-    // PS4Controller.Button.kR1.value);
+    private final JoystickButton touchpad = new JoystickButton(stick, PS4Controller.Button.kTouchpad.value);
 
     /* Subsystems */
     private final Swerve s_Swerve = new Swerve();
@@ -66,29 +63,17 @@ public class RobotContainer {
         configureButtonBindings();
     }
 
-    /**
-     * Use this method to define your button->command mappings. Buttons can be
-     * created by
-     * instantiating a {@link GenericHID} or one of its subclasses ({@link
-     * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then passing
-     * it to a {@link
-     * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
-     */
     private void configureButtonBindings() {
         /* Driver Buttons */
         square.onTrue(new InstantCommand(() -> s_Swerve.resetModulesToAbsolute()));
 
-        cross.onTrue(new InstantCommand(() -> arm.toggleClaw(cross)));
+        cross.onTrue(new InstantCommand(() -> arm.toggleClaw()));
 
         circle.onTrue(new InstantCommand(() -> s_Swerve.zeroModules()));
 
         triangle.onTrue(new InstantCommand(() -> s_Swerve.zeroGyro()));
 
-        /*
-         * rightBumper.onTrue(new ArmJoystick(arm, () -> -stick.getRawAxis(leftTrigger),
-         * () -> stick.getRawAxis(rightTrigger),
-         * () -> -stick.getRawAxis(rightStickY));
-         */
+        touchpad.onTrue(new InstantCommand(() -> arm.switchHeading()));
     }
 
     /**

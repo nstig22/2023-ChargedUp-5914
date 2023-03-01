@@ -28,14 +28,16 @@ public class ArmJoystick extends CommandBase {
         double upperPower = -setUpperMotor.getAsDouble();
         double lowerPower = (-setLowerMotor.getAsDouble() - setLowerMotor2.getAsDouble());
 
-        arm.setMotors(upperPower, lowerPower);
+        arm.setUpperMotor(upperPower);
+        arm.setLowerMotor(lowerPower);
 
         // arm.toggleClaw(clawPos);
     }
 
     @Override
     public void end(boolean interrupted) {
-        arm.setMotors(0, 0);
+        arm.setUpperMotor(0);
+        arm.setLowerMotor(0);
     }
 
     @Override

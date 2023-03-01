@@ -1,9 +1,8 @@
 package frc.robot.subsystems;
 
-import java.util.function.BooleanSupplier;
-
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 
 import edu.wpi.first.wpilibj.Compressor;
@@ -42,6 +41,9 @@ public class Arm extends SubsystemBase {
         upperArmMotor.setInverted(false);
         lowerArmMotor.setInverted(false);
 
+        lowerArmMotor.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 50);
+        upperArmMotor.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 50);
+
         // Encoders
         upperArmEncoder = new DutyCycleEncoder(Constants.Arm.upperArmEncoderID);
         lowerArmEncoder = new DutyCycleEncoder(Constants.Arm.lowerArmEncoderID);
@@ -59,38 +61,55 @@ public class Arm extends SubsystemBase {
     }
 
     // Set motor values
-    public void setMotors(double upperPower, double lowerPower) {
-        upperArmMotor.set(ControlMode.PercentOutput, upperPower);
-        lowerArmMotor.set(ControlMode.PercentOutput, lowerPower);
+
+    public void setUpperMotor(double power) {
+        upperArmMotor.set(ControlMode.PercentOutput, power);
     }
 
-    // Get encoder values
-    public double getUpperArmEncoder() {
+    public void setLowerMotor(double power) {
+        lowerArmMotor.set(ControlMode.PercentOutput, power);
+    }
+
+    /*
+     * public void setMotors(double upperPower, double lowerPower) {
+     * upperArmMotor.set(ControlMode.PercentOutput, upperPower);
+     * lowerArmMotor.set(ControlMode.PercentOutput, lowerPower);
+     * }
+     */
+
+    // Get falcon encoder values
+    public double getUpperFalconEncoder() {
+        return upperArmMotor.getSelectedSensorPosition(0);
+    }
+
+    public double getLowerFalconEncoder() {
+        return lowerArmMotor.getSelectedSensorPosition(0);
+    }
+
+    // Get mag encoder values
+    public double getUpperMagEncoder() {
         return (upperArmEncoder.getAbsolutePosition() - Constants.Arm.upperArmEncoderOffset);
     }
 
-    public double getLowerArmEncoder() {
+    public double getLowerMagEncoder() {
         return (lowerArmEncoder.getAbsolutePosition() - Constants.Arm.lowerArmEncoderOffset);
     }
 
     // Reset falcon encoders
-    public void resetMagEncoders() {
-        upperArmMotor.setSelectedSensorPosition(getUpperArmEncoder());
-        lowerArmMotor.setSelectedSensorPosition(getLowerArmEncoder());
+    public void resetFalconEncoders() {
+        upperArmMotor.setSelectedSensorPosition(getUpperMagEncoder());
+        lowerArmMotor.setSelectedSensorPosition(getLowerMagEncoder());
     }
 
-    // Set pneumatics
-    public void toggleClaw(BooleanSupplier state) {
-        /*
-         * if (state.getAsBoolean() == true){
-         * armSolenoid.set(Value.kForward);
-         * }
-         * else {
-         * armSolenoid.set(Value.kReverse);
-         * }
-         */
+    // Toggle pneumatics
+    public void toggleClaw() {
         armSolenoid.toggle();
-        System.out.println("\nClaw toggled.\n"); // FIXME Debug code
+    }
+
+    // Switch heading
+    public void switchHeading() {
+        upperArmMotor.setInverted(true);
+        lowerArmMotor.setInverted(true);
     }
 
     @Override
