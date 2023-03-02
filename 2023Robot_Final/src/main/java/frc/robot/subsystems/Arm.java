@@ -53,7 +53,7 @@ public class Arm extends SubsystemBase {
 
         pHub = new PneumaticHub(Constants.Arm.pHubID);
 
-        armSolenoid = new DoubleSolenoid(11, PneumaticsModuleType.REVPH, 1, 2);
+        armSolenoid = new DoubleSolenoid(Constants.Arm.pHubID, PneumaticsModuleType.REVPH, 1, 2);
 
         armSolenoid.set(Value.kForward);
 
@@ -61,7 +61,6 @@ public class Arm extends SubsystemBase {
     }
 
     // Set motor values
-
     public void setUpperMotor(double power) {
         upperArmMotor.set(ControlMode.PercentOutput, power);
     }
@@ -69,13 +68,6 @@ public class Arm extends SubsystemBase {
     public void setLowerMotor(double power) {
         lowerArmMotor.set(ControlMode.PercentOutput, power);
     }
-
-    /*
-     * public void setMotors(double upperPower, double lowerPower) {
-     * upperArmMotor.set(ControlMode.PercentOutput, upperPower);
-     * lowerArmMotor.set(ControlMode.PercentOutput, lowerPower);
-     * }
-     */
 
     // Get falcon encoder values
     public double getUpperFalconEncoder() {
