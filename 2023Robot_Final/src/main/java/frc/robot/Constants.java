@@ -7,28 +7,24 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
-//import frc.lib.util.COTSFalconSwerveConstants;
 import frc.lib.util.SwerveModuleConstants;
 
 public final class Constants {
-    public static final double stickDeadband = 0.1; // FIXME
+    public static final double stickDeadband = 0.1;
 
     public static final class Swerve {
         // public static final int pigeonID = 1;
         public static final boolean invertGyro = true; // Always ensure Gyro is CCW+ CW-
 
         /*
-         * public static final COTSFalconSwerveConstants chosenModule = //TODO: This
-         * must be tuned to specific robot
+         * public static final COTSFalconSwerveConstants chosenModule =
          * COTSFalconSwerveConstants.SDSMK4i(COTSFalconSwerveConstants.driveGearRatios.
          * SDSMK4i_L2);
          */
 
         /* Drivetrain Constants */
-        public static final double trackWidth = Units.inchesToMeters(24.25); // TODO: This must be updated when we have
-                                                                             // a robot to measure
-        public static final double wheelBase = Units.inchesToMeters(24.25); // TODO: This must be updated when we have a
-                                                                            // robot to measure
+        public static final double trackWidth = Units.inchesToMeters(24.25);
+        public static final double wheelBase = Units.inchesToMeters(24.25);
         public static final double wheelCircumference = Units.inchesToMeters(4.0);
 
         /*

@@ -69,7 +69,7 @@ public class RobotContainer {
 
         cross.onTrue(new InstantCommand(() -> arm.toggleClaw()));
 
-        circle.onTrue(new InstantCommand(() -> s_Swerve.zeroModules()));
+        //circle.onTrue(new InstantCommand(() -> s_Swerve.zeroModules()));
 
         triangle.onTrue(new InstantCommand(() -> s_Swerve.zeroGyro()));
 

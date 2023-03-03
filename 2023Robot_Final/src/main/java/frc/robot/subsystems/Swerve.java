@@ -1,21 +1,19 @@
 package frc.robot.subsystems;
 
 import frc.robot.SwerveModule;
-import frc.robot.Constants.Swerve.Mod0;
-import frc.robot.Constants.Swerve.Mod1;
-import frc.robot.Constants.Swerve.Mod2;
-import frc.robot.Constants.Swerve.Mod3;
 import frc.robot.Constants;
+
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -34,10 +32,10 @@ public class Swerve extends SubsystemBase {
         zeroGyro();
 
         mSwerveMods = new SwerveModule[] {
-                new SwerveModule(0, Constants.Swerve.Mod0.constants, Mod0.magEncoderID),
-                new SwerveModule(1, Constants.Swerve.Mod1.constants, Mod1.magEncoderID),
-                new SwerveModule(2, Constants.Swerve.Mod2.constants, Mod2.magEncoderID),
-                new SwerveModule(3, Constants.Swerve.Mod3.constants, Mod3.magEncoderID)
+                new SwerveModule(0, Constants.Swerve.Mod0.constants, Constants.Swerve.Mod0.magEncoderID),
+                new SwerveModule(1, Constants.Swerve.Mod1.constants, Constants.Swerve.Mod1.magEncoderID),
+                new SwerveModule(2, Constants.Swerve.Mod2.constants, Constants.Swerve.Mod2.magEncoderID),
+                new SwerveModule(3, Constants.Swerve.Mod3.constants, Constants.Swerve.Mod3.magEncoderID)
         };
 
         /*
@@ -57,8 +55,7 @@ public class Swerve extends SubsystemBase {
                         translation.getX(),
                         translation.getY(),
                         rotation,
-                        getYaw()) // FIXME add a print statement that says we're using field relative controls
-                                  // somehow
+                        getYaw())
                         : new ChassisSpeeds(
                                 translation.getX(),
                                 translation.getY(),
@@ -104,32 +101,31 @@ public class Swerve extends SubsystemBase {
     }
 
     public void zeroGyro() {
-        // gyro.setYaw(0);
         gyro.reset();
-
-        System.out.println("\nGyro reset to zero.\n"); // FIXME
+        System.out.println("\nGyro reset\n"); // FIXME
     }
 
     public Rotation2d getYaw() {
         return (Constants.Swerve.invertGyro) ? Rotation2d.fromDegrees(360 - gyro.getAngle())
                 : Rotation2d.fromDegrees(gyro.getAngle());
-        // return Rotation2d.fromDegrees(180);
     }
 
     public void resetModulesToAbsolute() {
         for (SwerveModule mod : mSwerveMods) {
             mod.resetToAbsolute();
-            System.out.println("\nModule " + mod.moduleNumber + " reset to absolute.\n"); // FIXME
+            System.out.println("\nModule " + mod.moduleNumber + " reset to absolute\n"); // FIXME
         }
     }
 
-    public void zeroModules() {
-        for (SwerveModule mod : mSwerveMods) {
-            mod.setDesiredState(new SwerveModuleState(0, new Rotation2d(0)), false);
-            mod.resetToAbsolute();
-            // mod.mAngleMotor.set(ControlMode.Position.fromDegrees(0));
-        }
-    }
+    /*
+     * public void zeroModules() {
+     * for (SwerveModule mod : mSwerveMods) {
+     * mod.setDesiredState(new SwerveModuleState(0, new Rotation2d(0)), false);
+     * mod.resetToAbsolute();
+     * // mod.mAngleMotor.set(ControlMode.Position.fromDegrees(0));
+     * }
+     * }
+     */
 
     @Override
     public void periodic() {

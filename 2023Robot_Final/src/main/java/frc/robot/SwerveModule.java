@@ -5,6 +5,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
+
 import frc.lib.math.Conversions;
 import frc.lib.util.CTREModuleState;
 import frc.lib.util.SwerveModuleConstants;
@@ -20,7 +21,6 @@ public class SwerveModule {
 
     private TalonFX mAngleMotor;
     private TalonFX mDriveMotor;
-    // private CANCoder angleEncoder;
     private DutyCycleEncoder angleEncoder;
 
     SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(Constants.Swerve.driveKS, Constants.Swerve.driveKV,
@@ -31,9 +31,8 @@ public class SwerveModule {
         this.angleOffset = moduleConstants.angleOffset;
 
         /* Angle Encoder Config */
-        // angleEncoder = new CANCoder(moduleConstants.cancoderID);
-        // configAngleEncoder();
         angleEncoder = new DutyCycleEncoder(dioID);
+        configAngleEncoder();
 
         /* Angle Motor Config */
         mAngleMotor = new TalonFX(moduleConstants.angleMotorID);
@@ -93,14 +92,11 @@ public class SwerveModule {
         mAngleMotor.setSelectedSensorPosition(absolutePosition);
     }
 
-    /*
-     * private void configAngleEncoder() {
-     * // angleEncoder.configFactoryDefault();
-     * angleEncoder.reset();
-     * 
-     * // angleEncoder.configAllSettings(Robot.ctreConfigs.swerveCanCoderConfig);
-     * }
-     */
+    private void configAngleEncoder() {
+        //angleEncoder.reset();
+        //angleEncoder.setDutyCycleRange(moduleNumber, moduleNumber);
+        //angleEncoder.setConnectedFrequencyThreshold(976);
+    }
 
     private void configAngleMotor() {
         mAngleMotor.configFactoryDefault();
