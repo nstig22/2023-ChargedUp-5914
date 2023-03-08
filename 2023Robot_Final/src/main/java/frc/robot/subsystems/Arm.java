@@ -96,6 +96,7 @@ public class Arm extends SubsystemBase {
     // Toggle pneumatics
     public void toggleClaw() {
         armSolenoid.toggle();
+        System.out.println("\nClaw toggled.\n");
     }
 
     // Switch heading

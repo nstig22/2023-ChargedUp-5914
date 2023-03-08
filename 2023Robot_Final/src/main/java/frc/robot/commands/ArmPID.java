@@ -6,6 +6,8 @@ import edu.wpi.first.wpilibj2.command.CommandBase;
 
 public class ArmPID extends CommandBase {
     private final Arm arm;
+    private double xSetpoint;
+    private double ySetpoint;
 
     double phi_degrees;
     double theta_degrees;
@@ -57,8 +59,8 @@ public class ArmPID extends CommandBase {
     double X;
     double Y;
 
-    double upperDeadband = 1000.0;
-    double lowerDeadband = 1000.0;
+    double upperDeadband = 500.0;
+    double lowerDeadband = 500.0;
 
     double upperError_sum = 0.0;
     double upperError_rate = 0.0;
@@ -70,10 +72,16 @@ public class ArmPID extends CommandBase {
 
     private Timer time;
 
-    ArmPID(Arm arm, double xSetpoint, double ySetpoint) {
+    public ArmPID(Arm arm, double xSetpoint, double ySetpoint) {
         this.arm = arm;
+        this.xSetpoint = xSetpoint;
+        this.ySetpoint = ySetpoint;
 
         arm.resetFalconEncoders();
+
+        time = new Timer();
+
+        delay = new Delay();
 
         // Start the timer
         time.start();
@@ -85,17 +93,36 @@ public class ArmPID extends CommandBase {
     public void initialize() {
         System.out.println("\nArmPID command started.\n");
 
+        X = xSetpoint;
+        Y = ySetpoint;
+
+        computeArmAngles(X, Y);
+
+        phi_degrees = Phi * 180.0 / Math.PI;
+        theta_degrees = Theta * 180.0 / Math.PI;
+
+        System.out.printf("\nPhi = %.3f  Theta = %.3f degrees", phi_degrees, theta_degrees);
     }
 
     @Override
     public void execute() {
         if (lowerRotation_complete == false) {
-
-            rotateLowerArm(theta_degrees);
+            if (theta_degrees < 0.0) {
+                // need a positive argument (address later)
+                rotateLowerArm_CCW(-theta_degrees);
+            }
+            if (theta_degrees > 0.0) {
+                rotateLowerArm_CW(theta_degrees);
+            }
         }
+
         if (upperRotation_complete == false) {
 
-            rotateUpperArm(phi_degrees + theta_degrees);
+            if ((phi_degrees + theta_degrees) < 0.0) {
+                rotateUpperArm_CCW(-(phi_degrees + theta_degrees));
+            } else if ((phi_degrees + theta_degrees) > 0.0) {
+                rotateUpperArm_CW(phi_degrees + theta_degrees);
+            }
         }
     }
 
@@ -309,6 +336,10 @@ public class ArmPID extends CommandBase {
     // a simple numeric technique to solve for phi and substitute
     // back into the equation for and solve (numerically) for theta.
     //
+    // 3/1/2023: Allowed for +/-PI/2 range in the angle phi.
+    // This allows computation of x coordinates close to the
+    // robot near the ground.
+    //
     /////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////
     int computeArmAngles(double x, double y) {
@@ -320,10 +351,10 @@ public class ArmPID extends CommandBase {
         double delta = 0.0;
         double min_delta = 1000.0;
 
-        // limit phi to 90 degrees or PI/2 radians, solve for the angle phi that
+        // limit phi to +/-90 degrees or +/-PI/2 radians, solve for the angle phi that
         // results in the minimum delta
         if (x > 0.0) {
-            for (i = 0; i < 1000; i++) {
+            for (i = -1000; i < 1000; i++) {
                 Phi = i * (Math.PI / 2000.0);
 
                 dtmp1 = Math.sqrt(lowerArm * lowerArm - (x * x - 2.0 * x * upperArm * Math.sin(Phi) +
@@ -340,7 +371,7 @@ public class ArmPID extends CommandBase {
             }
             Phi = min_phi; // Phi determined
         } else if (x < 0.0) {
-            for (i = 0; i < 1000; i++) {
+            for (i = -1000; i < 1000; i++) {
                 Phi = -(i * (Math.PI / 2000.0));
 
                 dtmp1 = Math.sqrt(lowerArm * lowerArm - (x * x - 2.0 * x * upperArm * Math.sin(Phi) +
@@ -425,8 +456,142 @@ public class ArmPID extends CommandBase {
     //
     /////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////
-    double rotateUpperArm(double degrees) {
+
+    double rotateUpperArm_original(double degrees) {
         boolean debug = true;
+        double error = 0;
+
+        // These are used for the integral and derivative terms
+        // and use the WPILib Timer class.
+        double current_time = 0.0;
+        double dt = 0;
+
+        // our PID constants (always need final tuning)
+        double kp = 0.000005;
+        double ki = 0.00002;
+        double kd = 0.0000;
+        double power = 0.0;
+
+        // First time through, get the initial position. We compute
+        // the number of counts associated with the degrees and
+        // compute our target count. If we have our motor inversion
+        // state correctly set we add the computed counts to the
+        // present position to rotate the drive clockwise. We start
+        // the motor within this block.
+        if (upperRotate_init == 1) {
+            upperCount = arm.getUpperFalconEncoder();
+
+            // Must rotate the upper arm theta + phi. The argument
+            // "degrees" is the sum of phi and theta
+            upperTarget = upperCount + compute_UpperCounts(degrees);
+            error = upperTarget - upperCount;
+            if (debug == true) {
+                System.out.printf("\nUpper initial count = %.3f\n", upperCount);
+                System.out.printf("\nUpper rotation target = %.3f\n", upperTarget);
+            }
+
+            power = kp * error;
+            // Here's the clamp
+            if (power > 0.5)
+                power = 0.5;
+
+            // Get it started
+            arm.setUpperMotor(power);
+
+            upperCount = 0;
+            upperRotate_init = 0;
+            upperLast_error = 0;
+            upperError_sum = 0.0;
+            upperError_rate = 0.0;
+
+        }
+
+        if (upperRotation_complete == false) {
+
+            // Set the motor in motion, wait a bit and then read the encoder
+            // and compute the error.
+            if (upperCount < upperTarget) {
+
+                current_time = time.get();
+
+                delay.delay_milliseconds(5.0);
+
+                upperCount = arm.getUpperFalconEncoder();
+
+                error = upperTarget - upperCount; // In this case should be positive
+
+                if (Math.abs(error) < upperDeadband) {
+                    arm.setUpperMotor(0);
+                    upperRotation_complete = true;
+                    System.out.printf("\nUpper Target = %.3f\n", upperTarget);
+                    System.out.printf("\nUpper Final count = %.3f  error = %.3f\n", upperCount, error);
+                    return (computeUpperDegrees_fromCounts(error));
+                }
+
+                dt = current_time - upperLast_time;
+
+                if (dt > 0.0) {
+                    upperError_rate = (error - upperLast_error) / dt;
+                }
+
+                // Start off integrating when within some percentage of the target
+                if (error < 0.5 * upperTarget)
+                    upperError_sum += error * dt; // don't apply the integral term until closer to target
+
+                power = kp * error + ki * upperError_sum + kd * upperError_rate;
+
+                // Here's the clamp on the upper power
+                if (power > 0.5)
+                    power = 0.5;
+
+                arm.setUpperMotor(power);
+
+                if (debug == true) {
+                    if (upperUpdate == 5) {
+                        System.out.printf("\nUpper count = %.3f  Upper error = %.3f\n", upperCount, error);
+                        System.out.printf("\nUpper error_sum = %.3f  error_rate = %.3f  dt = %.3f\n", upperError_sum,
+                                upperError_rate, dt);
+                        System.out.printf("\nUpper:kp*error = %.3f\n", kp * error);
+                        System.out.printf("\nUpper:ki*error_sum = %.3f\n", ki * upperError_sum);
+                        System.out.printf("\nUpper:power = %.3f\n", power);
+                        upperUpdate = 0;
+                    }
+                    upperUpdate++;
+                }
+
+                // Record last time and last error
+                upperLast_time = time.get();
+                upperLast_error = error;
+            } // if(upperCount<upperTarget)
+
+        } // if(turn_motion_complete==false)
+
+        return (computeUpperDegrees_fromCounts(upperLast_error));
+
+    }
+
+    double rotateUpperArm(double degrees) {
+
+        double error = 0.0;
+
+        upperRotate_init = 1;
+
+        if (upperRotation_complete == false) {
+
+            if (degrees > 0.0) {
+                error = rotateUpperArm_CW(degrees);
+            } else if (degrees < 0.0) {
+                degrees *= -1.0;
+                error = rotateUpperArm_CCW(degrees);
+            }
+        }
+
+        return (error);
+
+    }
+
+    double rotateUpperArm_CW(double degrees) {
+        boolean debug = false;
         double error = 0;
 
         // These are used for the integral and derivative terms
@@ -462,8 +627,6 @@ public class ArmPID extends CommandBase {
             // Here's the clamp
             if (power > 0.5)
                 power = 0.5;
-            if (power < 0.05)
-                power = 0.05;
 
             // Get it started
             arm.setUpperMotor(power);
@@ -490,6 +653,14 @@ public class ArmPID extends CommandBase {
 
                 error = upperTarget - upperCount; // In this case should be positive
 
+                if ((Math.abs(error) < upperDeadband) || (error < 0.0)) {
+                    arm.setUpperMotor(0);
+                    upperRotation_complete = true;
+                    System.out.printf("\nUpper Target = %.3f\n", upperTarget);
+                    System.out.printf("\nUpper Final count = %.3f  error = %.3f\n", upperCount, error);
+                    return (computeUpperDegrees_fromCounts(error));
+                }
+
                 dt = current_time - upperLast_time;
 
                 if (dt > 0.0) {
@@ -505,71 +676,39 @@ public class ArmPID extends CommandBase {
                 // Here's the clamp on the upper power
                 if (power > 0.5)
                     power = 0.5;
-                // Here is another clamp if we need to correct from an overshoot
-                if (power < -0.2)
-                    power = -0.2;
 
                 arm.setUpperMotor(power);
 
                 if (debug == true) {
-                    System.out.printf("\nUpper error_sum = %.3f  error_rate = %.3f  dt = %.3f\n", upperError_sum,
-                            upperError_rate, dt);
-                    System.out.printf("\nUpper:kp*error = %.3f\n", kp * error);
-                    System.out.printf("\nUpper:ki*error_sum = %.3f\n", ki * upperError_sum);
-                    System.out.printf("\nUpper:power = %.3f\n", power);
+                    if (upperUpdate == 5) {
+                        System.out.printf("\nUpper count = %.3f  Upper error = %.3f\n", upperCount, error);
+                        System.out.printf("\nUpper error_sum = %.3f  error_rate = %.3f  dt = %.3f\n", upperError_sum,
+                                upperError_rate, dt);
+                        System.out.printf("\nUpper:kp*error = %.3f\n", kp * error);
+                        System.out.printf("\nUpper:ki*error_sum = %.3f\n", ki * upperError_sum);
+                        System.out.printf("\nUpper:power = %.3f\n", power);
+                        upperUpdate = 0;
+                    }
+                    upperUpdate++;
                 }
 
                 // Record last time and last error
-                upperLast_time = time.get();
-                upperLast_error = error;
-            }
+                // upperLast_time=time.get();
+                // upperLast_error=error;
+            } // if(upperCount<upperTarget)
 
-            // Are we within the deadband for the turn? Have we overshot?
-            // If either of these are true, stop the motor. We need to
-            // set a flag that the motion has been completed or we will
-            // continue to drive the motors on calls after we have
-            // satisfied this condition. Since "error" has function
-            // scope it is set to zero every time this function is called
-            // 2/9/2023: Interesting if we modify the if statement to
-            // require that we are within the deadband. Seems to improve
-            // our convergence.
-            // if ((Math.abs(error)<turn_deadband)||(error<0.0)) {
-            if (Math.abs(error) < upperDeadband) {
-                arm.setUpperMotor(0);
-                upperRotation_complete = true;
-                System.out.printf("\nUpper Target = %.3f\n", upperTarget);
-                System.out.printf("\nUpper Final count = %.3f  error = %.3f\n", upperCount, upperLast_error);
+            // Record last time and last error
+            upperLast_time = time.get();
+            upperLast_error = error;
 
-            }
-
-            if ((debug == true) && (upperRotation_complete == false)) {
-                upperUpdate++;
-                if (upperUpdate == 10) {
-                    System.out.printf("\nUpper count = %.3f  Upper error = %.3f\n", upperCount, error);
-                    upperUpdate = 0;
-                }
-            }
         } // if(turn_motion_complete==false)
 
         return (computeUpperDegrees_fromCounts(upperLast_error));
 
     }
 
-    /////////////////////////////////////////////////////////////////
-    // Function:
-    /////////////////////////////////////////////////////////////////
-    //
-    // Purpose:
-    //
-    // Arguments:
-    //
-    // Returns:
-    //
-    // Remarks: degrees = (theta)*180.0/PI
-    //
-    /////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////
-    double rotateLowerArm(double degrees) {
+    // Note degrees must be a positive number
+    double rotateUpperArm_CCW(double degrees) {
         boolean debug = false;
         double error = 0;
 
@@ -579,7 +718,354 @@ public class ArmPID extends CommandBase {
         double dt = 0;
 
         // our PID constants (always need final tuning)
-        double kp = 0.00005;
+        double kp = 0.00001;
+        double ki = 0.0002;
+        double kd = 0.0000;
+        double power = 0.0;
+
+        // First time through, get the initial position. We compute
+        // the number of counts associated with the degrees and
+        // compute our target count. If we have our motor inversion
+        // state correctly set we add the computed counts to the
+        // present position to rotate the drive counter clockwise. We start
+        // the motor within this block.
+        if (upperRotate_init == 1) {
+            upperCount = arm.getUpperFalconEncoder();
+
+            // Must rotate the upper arm theta + phi. The argument
+            // "degrees" is the sum of phi and theta
+            upperTarget = upperCount - compute_UpperCounts(degrees);
+            error = upperCount - upperTarget;
+            if (debug == true) {
+                System.out.printf("\nUpper initial count = %.3f\n", upperCount);
+                System.out.printf("\nUpper rotation target = %.3f\n", upperTarget);
+            }
+
+            power = kp * error;
+            // Here's the clamp
+            if (power > 0.5)
+                power = 0.5;
+
+            // Get it started
+            arm.setUpperMotor(power * -1);
+
+            upperCount = 0;
+            upperRotate_init = 0;
+            upperLast_error = 0;
+            upperError_sum = 0.0;
+            upperError_rate = 0.0;
+
+        }
+
+        if (upperRotation_complete == false) {
+
+            // Set the motor in motion, wait a bit and then read the encoder
+            // and compute the error.
+            if (upperCount > upperTarget) {
+
+                current_time = time.get();
+
+                delay.delay_milliseconds(5.0);
+
+                upperCount = arm.getUpperFalconEncoder();
+
+                error = upperCount - upperTarget; // In this case should be positive
+
+                if ((Math.abs(error) < upperDeadband) || (error < 0.0)) {
+                    arm.setUpperMotor(0);
+                    upperRotation_complete = true;
+                    System.out.printf("\nUpper Target = %.3f\n", upperTarget);
+                    System.out.printf("\nUpper Final count = %.3f  error = %.3f\n", upperCount, error);
+                    return (computeUpperDegrees_fromCounts(error));
+                }
+
+                dt = current_time - upperLast_time;
+
+                if (dt > 0.0) {
+                    upperError_rate = (error - upperLast_error) / dt;
+                }
+
+                // Start off integrating when within some percentage of the target
+                // Note the use of the absolute value of the target for
+                // determination of the error sum.
+                if (error < Math.abs(0.5 * upperTarget))
+                    upperError_sum += error * dt; // don't apply the integral term until closer to target
+
+                power = kp * error + ki * upperError_sum + kd * upperError_rate;
+
+                // Here's the clamp on the upper power
+                if (power > 0.5)
+                    power = 0.5;
+
+                arm.setUpperMotor(power * -1);
+
+                if (debug == true) {
+                    if (upperUpdate == 5) {
+                        System.out.printf("\nUpper count = %.3f  Upper error = %.3f\n", upperCount, error);
+                        System.out.printf("\nUpper error_sum = %.3f  error_rate = %.3f  dt = %.3f\n",
+                                upperError_sum, upperError_rate, dt);
+                        System.out.printf("\nUpper:kp*error = %.3f\n", kp * error);
+                        System.out.printf("\nUpper:ki*error_sum = %.3f\n", ki * upperError_sum);
+                        System.out.printf("\nUpper:power = %.3f\n", power);
+                        upperUpdate = 0;
+                    }
+                    upperUpdate++;
+                }
+
+                // Record last time and last error
+                // upperLast_time=time.get();
+                // upperLast_error=error;
+            } // if(upperCount<upperTarget)
+              // Record last time and last error
+            upperLast_time = time.get();
+            upperLast_error = error;
+
+        } // if(turn_motion_complete==false)
+
+        return (computeUpperDegrees_fromCounts(upperLast_error));
+
+    }
+
+    double rotateLowerArm_original(double degrees) {
+        boolean debug = true;
+        double error = 0;
+
+        // These are used for the integral and derivative terms
+        // and use the WPILib Timer class.
+        double current_time = 0.0;
+        double dt = 0;
+
+        // our PID constants (always need final tuning)
+        double kp = 0.000005;
+        double ki = 0.00002;
+        double kd = 0.0000;
+        double power = 0.0;
+
+        // First time through, get the initial position. We compute
+        // the number of counts associated with the degrees and
+        // compute our target count. If we have our motor inversion
+        // state correctly set we add the computed counts to the
+        // present position to rotate the drive clockwise
+        if (lowerRotate_init == 1) {
+            lowerCount = arm.getLowerFalconEncoder();
+
+            // Must rotate the upper arm theta + phi. The argument
+            // "degrees" is the sum of phi and theta
+            lowerTarget = lowerCount + compute_LowerCounts(degrees);
+            error = lowerTarget - lowerCount;
+            if (debug == true) {
+                System.out.printf("\nLower initial count = %.3f\n", lowerCount);
+                System.out.printf("\nLower rotation target = %.3f\n", lowerTarget);
+            }
+
+            power = kp * error;
+            // Here's the clamp
+            if (power > 0.5)
+                power = 0.5;
+            // if(power<0.05)power=0.05;
+
+            // Get it started
+            arm.setLowerMotor(power);
+            lowerCount = 0;
+            lowerRotate_init = 0;
+            lowerLast_error = 0;
+            lowerError_sum = 0.0;
+            lowerError_rate = 0.0;
+
+        }
+
+        if (lowerRotation_complete == false) {
+
+            // Set the motor in motion, wait a bit and then read the encoder
+            // and compute the error.
+            if (lowerCount < lowerTarget) {
+
+                current_time = time.get();
+
+                delay.delay_milliseconds(5.0);
+
+                lowerCount = arm.getLowerFalconEncoder();
+
+                error = lowerTarget - lowerCount; // In this case should be positive
+
+                if ((Math.abs(error) < lowerDeadband) || (error < 0.0)) {
+                    arm.setLowerMotor(0);
+                    lowerRotation_complete = true;
+                    System.out.printf("\nLower: target = %.3f\n", lowerTarget);
+                    System.out.printf("\nLower: final count = %.3f  final error = %.3f\n", lowerCount, error);
+                    return (computeLowerDegrees_fromCounts(error));
+                }
+
+                dt = current_time - lowerLast_time;
+
+                if (dt > 0.0) {
+                    lowerError_rate = (error - lowerLast_error) / dt;
+                }
+
+                // Start off integrating when within some percentage of the target
+                if (error < 0.5 * lowerTarget)
+                    lowerError_sum += error * dt; // don't apply the integral term until closer to target
+
+                power = kp * error + ki * lowerError_sum + kd * lowerError_rate;
+                // Here's the clamp
+                if (power > 0.5)
+                    power = 0.5;
+
+                arm.setLowerMotor(power);
+
+                if (debug == true) {
+                    if (lowerUpdate == 5) {
+                        System.out.printf("\nLower: count = %.3f  error = %.3f\n", lowerCount, error);
+                        System.out.printf("\nLower: error_sum = %.3f  error_rate = %.3f  dt = %.3f", lowerError_sum,
+                                lowerError_rate, dt);
+                        System.out.printf("\nLower: kp*error = %.3f\n", kp * error);
+                        System.out.printf("\nLower: ki*error_sum = %.3f\n", ki * lowerError_sum);
+                        System.out.printf("\nLower: power = %.3f\n", power);
+                        lowerUpdate = 0;
+                    }
+                    lowerUpdate++;
+                }
+
+                // Record last time and last error
+                lowerLast_time = time.get();
+                lowerLast_error = error;
+            }
+
+        } // if(turn_motion_complete==false)
+
+        return (computeLowerDegrees_fromCounts(lowerLast_error));
+
+    }
+
+    // Before calling this function, note that the degrees submitted must be a
+    // positive number.
+    double rotateLowerArm_CCW(double degrees) {
+        boolean debug = false;
+        double error = 0;
+
+        // These are used for the integral and derivative terms
+        // and use the WPILib Timer class.
+        double current_time = 0.0;
+        double dt = 0;
+
+        // our PID constants (always need final tuning)
+        double kp = 0.00002;
+        double ki = 0.0002;
+        double kd = 0.0000;
+        double power = 0.0;
+
+        // First time through, get the initial position. We compute
+        // the number of counts associated with the degrees and
+        // compute our target count. If we have our motor inversion
+        // state correctly set we add the computed counts to the
+        // present position to rotate the drive clockwise
+        if (lowerRotate_init == 1) {
+            lowerCount = arm.getLowerFalconEncoder();
+
+            // Must rotate the lower arm theta. In this case
+            // (negative x coordinate), the target will be less
+            // than the present count
+            lowerTarget = lowerCount - compute_LowerCounts(degrees);
+            error = lowerCount - lowerTarget;
+            if (debug == true) {
+                System.out.printf("\nLower initial count = %.3f\n", lowerCount);
+                System.out.printf("\nLower rotation target = %.3f\n", lowerTarget);
+            }
+
+            power = kp * error;
+            // Here's the clamp
+            if (power > 0.5)
+                power = 0.5;
+            if (power < 0.05)
+                power = 0.05;
+
+            // Get it started
+            arm.setLowerMotor(power * -1);
+            lowerCount = 0;
+            lowerRotate_init = 0;
+            lowerLast_error = 0;
+            lowerError_sum = 0.0;
+            lowerError_rate = 0.0;
+
+        }
+
+        if (lowerRotation_complete == false) {
+
+            // Set the motor in motion, wait a bit and then read the encoder
+            // and compute the error.
+            if (lowerCount > lowerTarget) {
+
+                current_time = time.get();
+
+                delay.delay_milliseconds(5.0);
+
+                lowerCount = arm.getLowerFalconEncoder();
+
+                error = lowerCount - lowerTarget; // In this case should be positive
+
+                if ((Math.abs(error) < lowerDeadband) || (error < 0.0)) {
+                    arm.setLowerMotor(0);
+                    lowerRotation_complete = true;
+                    System.out.printf("\nLower: target = %.3f\n", lowerTarget);
+                    System.out.printf("\nLower: final count = %.3f  final error = %.3f\n", lowerCount, error);
+                    return (computeLowerDegrees_fromCounts(error));
+                }
+
+                dt = current_time - lowerLast_time;
+
+                if (dt > 0.0) {
+                    lowerError_rate = (error - lowerLast_error) / dt;
+                }
+
+                // Start off integrating when within some percentage of the target
+                if (error < Math.abs(0.5 * lowerTarget))
+                    lowerError_sum += error * dt; // don't apply the integral term until closer to target
+
+                power = kp * error + ki * lowerError_sum + kd * lowerError_rate;
+                // Here's the clamp
+                if (power > 0.5)
+                    power = 0.5;
+
+                arm.setLowerMotor(power * -1);
+
+                if (debug == true) {
+                    if (lowerUpdate == 5) {
+                        System.out.printf("\nLower: count = %.3f  error = %.3f\n", lowerCount, error);
+                        System.out.printf("\nLower: error_sum = %.3f  error_rate = %.3f  dt = %.3f", lowerError_sum,
+                                lowerError_rate, dt);
+                        System.out.printf("\nLower: kp*error = %.3f\n", kp * error);
+                        System.out.printf("\nLower: ki*error_sum = %.3f\n", ki * lowerError_sum);
+                        System.out.printf("\nLower: power = %.3f\n", power);
+                        lowerUpdate = 0;
+                    }
+                    lowerUpdate++;
+                }
+
+                // Record last time and last error
+                // lowerLast_time=time.get();
+                // lowerLast_error=error;
+            }
+            // Record last time and last error
+            lowerLast_time = time.get();
+            lowerLast_error = error;
+
+        } // if(turn_motion_complete==false)
+
+        return (computeLowerDegrees_fromCounts(lowerLast_error));
+
+    }
+
+    double rotateLowerArm_CW(double degrees) {
+        boolean debug = false;
+        double error = 0;
+
+        // These are used for the integral and derivative terms
+        // and use the WPILib Timer class.
+        double current_time = 0.0;
+        double dt = 0;
+
+        // our PID constants (always need final tuning)
+        double kp = 0.00002;
         double ki = 0.0002;
         double kd = 0.0000;
         double power = 0.0;
@@ -615,6 +1101,7 @@ public class ArmPID extends CommandBase {
             lowerLast_error = 0;
             lowerError_sum = 0.0;
             lowerError_rate = 0.0;
+
         }
 
         if (lowerRotation_complete == false) {
@@ -631,6 +1118,14 @@ public class ArmPID extends CommandBase {
 
                 error = lowerTarget - lowerCount; // In this case should be positive
 
+                if ((Math.abs(error) < lowerDeadband) || (error < 0.0)) {
+                    arm.setLowerMotor(0);
+                    lowerRotation_complete = true;
+                    System.out.printf("\nLower: target = %.3f\n", lowerTarget);
+                    System.out.printf("\nLower: final count = %.3f  final error = %.3f\n", lowerCount, error);
+                    return (computeLowerDegrees_fromCounts(error));
+                }
+
                 dt = current_time - lowerLast_time;
 
                 if (dt > 0.0) {
@@ -645,51 +1140,34 @@ public class ArmPID extends CommandBase {
                 // Here's the clamp
                 if (power > 0.5)
                     power = 0.5;
-                if (power < -0.2)
-                    power = -0.2;
 
                 arm.setLowerMotor(power);
 
                 if (debug == true) {
-                    System.out.printf("\nLower: error_sum = %.3f  error_rate = %.3f  dt = %.3f", lowerError_sum,
-                            lowerError_rate, dt);
-                    System.out.printf("\nLower: kp*error = %.3f\n", kp * error);
-                    System.out.printf("\nLower: ki*error_sum = %.3f\n", ki * lowerError_sum);
-                    System.out.printf("\nLower: power = %.3f\n", power);
+                    if (lowerUpdate == 5) {
+                        System.out.printf("\nLower: count = %.3f  error = %.3f\n", lowerCount, error);
+                        System.out.printf("\nLower: error_sum = %.3f  error_rate = %.3f  dt = %.3f", lowerError_sum,
+                                lowerError_rate, dt);
+                        System.out.printf("\nLower: kp*error = %.3f\n", kp * error);
+                        System.out.printf("\nLower: ki*error_sum = %.3f\n", ki * lowerError_sum);
+                        System.out.printf("\nLower: power = %.3f\n", power);
+                        lowerUpdate = 0;
+                    }
+                    lowerUpdate++;
                 }
 
                 // Record last time and last error
-                lowerLast_time = time.get();
-                lowerLast_error = error;
+                // lowerLast_time=time.get();
+                // lowerLast_error=error;
             }
+            // Record last time and last error
+            lowerLast_time = time.get();
+            lowerLast_error = error;
 
-            // Are we within the deadband for the turn? Have we overshot?
-            // If either of these are true, stop the motor. We need to
-            // set a flag that the motion has been completed or we will
-            // continue to drive the motors on calls after we have
-            // satisfied this condition. Since "error" has function
-            // scope it is set to zero every time this function is called
-            // 2/9/2023: Interesting if we modify the if statement to
-            // require that we are within the deadband. Seems to improve
-            // our convergence.
-            if (Math.abs(error) < lowerDeadband) {
-                arm.setLowerMotor(0);
-                lowerRotation_complete = true;
-                System.out.printf("\nLower: target = %.3f\n", lowerTarget);
-                System.out.printf("\nLower: final count = %.3f  error = %.3f\n", lowerCount, lowerLast_error);
-
-            }
-
-            if ((debug == true) && (lowerRotation_complete == false)) {
-                lowerUpdate++;
-                if (lowerUpdate == 10) {
-                    System.out.printf("\nLower: count = %.3f  error = %.3f\n", lowerCount, error);
-                    lowerUpdate = 0;
-                }
-            }
         } // if(turn_motion_complete==false)
 
         return (computeLowerDegrees_fromCounts(lowerLast_error));
 
     }
+
 }
