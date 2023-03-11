@@ -8,7 +8,10 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+//import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.SerialPort;
+
+import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -21,15 +24,17 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 public class Swerve extends SubsystemBase {
     public SwerveDriveOdometry swerveOdometry;
     public SwerveModule[] mSwerveMods;
-    // public Pigeon2 gyro1;
-    public ADXRS450_Gyro gyro;
+    //public ADXRS450_Gyro adxGyro;
+    public AHRS ahrs;
 
     public Swerve() {
-        // gyro = new Pigeon2(Constants.Swerve.pigeonID);
-        gyro = new ADXRS450_Gyro();
-        // gyro1.configFactoryDefault();
-        gyro.calibrate();
-        zeroGyro();
+        //ADXRS450
+        //adxGyro = new ADXRS450_Gyro();
+        //adxGyro.calibrate();
+        //zeroGyro();
+
+        //navX2-Micro
+        ahrs = new AHRS(SerialPort.Port.kUSB);
 
         mSwerveMods = new SwerveModule[] {
                 new SwerveModule(0, Constants.Swerve.Mod0.constants, Constants.Swerve.Mod0.magEncoderID),
@@ -45,6 +50,8 @@ public class Swerve extends SubsystemBase {
          */
         Timer.delay(1.0);
         resetModulesToAbsolute();
+        ahrs.calibrate();
+        ahrs.zeroYaw();
 
         swerveOdometry = new SwerveDriveOdometry(Constants.Swerve.swerveKinematics, getYaw(), getModulePositions());
     }
@@ -101,31 +108,23 @@ public class Swerve extends SubsystemBase {
     }
 
     public void zeroGyro() {
-        gyro.reset();
-        System.out.println("\nGyro reset\n"); // FIXME
+        //adxGyro.reset();
+        //System.out.println("\nADX gyro reset\n");
+        ahrs.reset();
+        System.out.println("\nnavX gyro reset\n");
     }
 
     public Rotation2d getYaw() {
-        return (Constants.Swerve.invertGyro) ? Rotation2d.fromDegrees(360 - gyro.getAngle())
-                : Rotation2d.fromDegrees(gyro.getAngle());
+        return (Constants.Swerve.invertGyro) ? Rotation2d.fromDegrees(360 - ahrs.getAngle())
+                : Rotation2d.fromDegrees(ahrs.getAngle());
     }
 
     public void resetModulesToAbsolute() {
         for (SwerveModule mod : mSwerveMods) {
             mod.resetToAbsolute();
-            System.out.println("\nModule " + mod.moduleNumber + " reset to absolute\n"); // FIXME
+            System.out.println("\nModule " + mod.moduleNumber + " reset to absolute\n");
         }
     }
-
-    /*
-     * public void zeroModules() {
-     * for (SwerveModule mod : mSwerveMods) {
-     * mod.setDesiredState(new SwerveModuleState(0, new Rotation2d(0)), false);
-     * mod.resetToAbsolute();
-     * // mod.mAngleMotor.set(ControlMode.Position.fromDegrees(0));
-     * }
-     * }
-     */
 
     @Override
     public void periodic() {
@@ -136,6 +135,7 @@ public class Swerve extends SubsystemBase {
             SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Integrated", mod.getPosition().angle.getDegrees());
             SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);
         }
-        SmartDashboard.putNumber("Gyro angle ", (360 - gyro.getAngle()));
+        SmartDashboard.putBoolean("navX calibrating", ahrs.isCalibrating());
+        SmartDashboard.putNumber("navX Gyro angle ", (360 - ahrs.getAngle()));
     }
 }

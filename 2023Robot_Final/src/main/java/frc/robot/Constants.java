@@ -13,7 +13,6 @@ public final class Constants {
     public static final double stickDeadband = 0.1;
 
     public static final class Swerve {
-        // public static final int pigeonID = 1;
         public static final boolean invertGyro = true; // Always ensure Gyro is CCW+ CW-
 
         /*
@@ -126,7 +125,7 @@ public final class Constants {
             public static final int driveMotorID = 5;
             public static final int angleMotorID = 6;
             public static final int magEncoderID = 2;
-            public static final Rotation2d angleOffset = Rotation2d.fromDegrees(49.5);
+            public static final Rotation2d angleOffset = Rotation2d.fromDegrees(48.8);
             // public static final double mod2KP = 999.999;
             public static final SwerveModuleConstants constants = new SwerveModuleConstants(driveMotorID, angleMotorID,
                     magEncoderID, angleOffset);
@@ -137,7 +136,7 @@ public final class Constants {
             public static final int driveMotorID = 7;
             public static final int angleMotorID = 8;
             public static final int magEncoderID = 3;
-            public static final Rotation2d angleOffset = Rotation2d.fromDegrees(22.1);
+            public static final Rotation2d angleOffset = Rotation2d.fromDegrees(322.1);
             // public static final double mod3KP = 999.999;
             public static final SwerveModuleConstants constants = new SwerveModuleConstants(driveMotorID, angleMotorID,
                     magEncoderID, angleOffset);
@@ -176,5 +175,10 @@ public final class Constants {
         // Pneumatics IDs
         public static final int pHubID = 11;
         public static final int compID = 11;
+
+        // Gear reduction values
+        public static final double upperGearReduction = 256.0;
+        public static final double lowerGearReduction = 256.0;
+        public static final double lowerChainReduction = 3.2;
     }
 }

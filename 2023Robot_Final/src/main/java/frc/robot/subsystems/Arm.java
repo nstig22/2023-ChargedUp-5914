@@ -53,11 +53,11 @@ public class Arm extends SubsystemBase {
 
         pHub = new PneumaticHub(Constants.Arm.pHubID);
 
-        armSolenoid = new DoubleSolenoid(Constants.Arm.pHubID, PneumaticsModuleType.REVPH, 1, 2);
+        armSolenoid = new DoubleSolenoid(Constants.Arm.pHubID, PneumaticsModuleType.REVPH, 4, 5);
 
-        armSolenoid.set(Value.kForward);
+        armSolenoid.set(Value.kReverse);
 
-        comp.enableAnalog(110, 120);
+        comp.enableAnalog(110, 120); //FIXME
     }
 
     // Set motor values

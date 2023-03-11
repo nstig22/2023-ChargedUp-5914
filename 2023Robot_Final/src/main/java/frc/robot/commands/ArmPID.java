@@ -1,5 +1,6 @@
 package frc.robot.commands;
 
+import frc.robot.Constants;
 import frc.robot.subsystems.Arm;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandBase;
@@ -41,15 +42,10 @@ public class ArmPID extends CommandBase {
     double upperLast_error;
     double lowerLast_error;
 
-    // Gear reduction parameters
-    final double upperGearReduction = 100.0;
-    final double lowerGearReduction = 64.0;
-    final double lowerChainReduction = 4.0;
-
     // Mechanical dimensions
     private double upperArm = 33.50;
     private double lowerArm = 34.625;
-    private double pivotHeight = 15.5; // need a good number here
+    private double pivotHeight = 15.5;
 
     // Key angle variables
     double Theta;
@@ -158,7 +154,7 @@ public class ArmPID extends CommandBase {
     double computeLowerDriveRatio() {
         double dtmp;
 
-        dtmp = lowerGearReduction * lowerChainReduction;
+        dtmp = Constants.Arm.lowerGearReduction * Constants.Arm.lowerChainReduction;
 
         return (dtmp);
 
@@ -238,7 +234,7 @@ public class ArmPID extends CommandBase {
     double computeUpperDriveRatio() {
         double dtmp;
 
-        dtmp = upperGearReduction;
+        dtmp = Constants.Arm.upperGearReduction;
 
         return (dtmp);
 
