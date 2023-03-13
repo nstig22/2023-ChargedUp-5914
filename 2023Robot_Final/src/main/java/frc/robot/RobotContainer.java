@@ -65,7 +65,7 @@ public class RobotContainer {
 
     private void configureButtonBindings() {
         /* Driver Buttons */
-        square.onTrue(new InstantCommand(() -> s_Swerve.resetModulesToAbsolute()));
+        //square.onTrue(new InstantCommand(() -> s_Swerve.resetModulesToAbsolute()));
 
         cross.onTrue(new InstantCommand(() -> arm.toggleClaw()));
 
@@ -83,6 +83,6 @@ public class RobotContainer {
      */
     public Command getAutonomousCommand() {
         // An ExampleCommand will run in autonomous
-        return new exampleAuto(s_Swerve);
+        return new testAuto(s_Swerve);
     }
 }

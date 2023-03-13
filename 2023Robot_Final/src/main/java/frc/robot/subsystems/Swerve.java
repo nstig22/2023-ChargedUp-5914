@@ -8,7 +8,6 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 
-//import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.SerialPort;
 
 import com.kauailabs.navx.frc.AHRS;
@@ -24,16 +23,10 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 public class Swerve extends SubsystemBase {
     public SwerveDriveOdometry swerveOdometry;
     public SwerveModule[] mSwerveMods;
-    //public ADXRS450_Gyro adxGyro;
     public AHRS ahrs;
 
     public Swerve() {
-        //ADXRS450
-        //adxGyro = new ADXRS450_Gyro();
-        //adxGyro.calibrate();
-        //zeroGyro();
-
-        //navX2-Micro
+        // navX2-Micro
         ahrs = new AHRS(SerialPort.Port.kUSB);
 
         mSwerveMods = new SwerveModule[] {
@@ -108,8 +101,6 @@ public class Swerve extends SubsystemBase {
     }
 
     public void zeroGyro() {
-        //adxGyro.reset();
-        //System.out.println("\nADX gyro reset\n");
         ahrs.reset();
         System.out.println("\nnavX gyro reset\n");
     }
