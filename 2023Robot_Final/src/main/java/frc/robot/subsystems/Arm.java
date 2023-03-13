@@ -57,7 +57,7 @@ public class Arm extends SubsystemBase {
 
         armSolenoid.set(Value.kReverse);
 
-        comp.enableAnalog(110, 120); //FIXME
+        comp.enableAnalog(110, 120); // FIXME
     }
 
     // Set motor values
@@ -103,6 +103,11 @@ public class Arm extends SubsystemBase {
     public void switchHeading() {
         upperArmMotor.setInverted(true);
         lowerArmMotor.setInverted(true);
+    }
+
+    // TODO Implement limit to avoid extending beyond max height
+    public void heightLimit() {
+
     }
 
     @Override
