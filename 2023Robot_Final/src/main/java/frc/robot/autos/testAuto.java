@@ -29,7 +29,7 @@ public class testAuto extends SequentialCommandGroup {
                 // Start here
                 new Pose2d(0, 0, new Rotation2d(0)),
                 // Pass through these interior waypoints
-                List.of(new Translation2d(1, 1), new Translation2d(2, -1)),
+                List.of(new Translation2d(1, 0), new Translation2d(2, 0)),
                 // End here
                 new Pose2d(3, 0, new Rotation2d(0)),
                 config);

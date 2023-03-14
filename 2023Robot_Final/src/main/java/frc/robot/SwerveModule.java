@@ -93,8 +93,8 @@ public class SwerveModule {
     }
 
     private void configAngleEncoder() {
-        angleEncoder.setDutyCycleRange(1/1024, 1023/1024);
-        angleEncoder.setConnectedFrequencyThreshold(976);
+        //angleEncoder.setDutyCycleRange(1/1024, 1023/1024);
+        //angleEncoder.setConnectedFrequencyThreshold(976);
     }
 
     private void configAngleMotor() {
