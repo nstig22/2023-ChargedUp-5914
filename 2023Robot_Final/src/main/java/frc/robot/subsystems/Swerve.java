@@ -26,8 +26,8 @@ public class Swerve extends SubsystemBase {
     public AHRS ahrs;
 
     public Swerve() {
-        // navX2-Micro
-        ahrs = new AHRS(SerialPort.Port.kUSB);
+        // navX2
+        ahrs = new AHRS(SerialPort.Port.kMXP);
 
         mSwerveMods = new SwerveModule[] {
                 new SwerveModule(0, Constants.Swerve.Mod0.constants, Constants.Swerve.Mod0.magEncoderID),

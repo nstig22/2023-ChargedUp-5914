@@ -83,9 +83,9 @@ public final class Constants {
          * Drive Motor Characterization Values
          * Divide SYSID values by 12 to convert from volts to percent output for CTRE
          */
-        public static final double driveKS = (0.15336 / 12); // TODO: This must be tuned to specific robot
-        public static final double driveKV = (0.00033875 / 12);
-        public static final double driveKA = (0.0001807 / 12);
+        public static final double driveKS = (0.22939 / 12); // TODO: This must be tuned to specific robot
+        public static final double driveKV = (2.0893 / 12);
+        public static final double driveKA = (1.1785 / 12);
 
         /* Swerve Profiling Values */
         /** Meters per Second */
@@ -168,9 +168,9 @@ public final class Constants {
         public static final int upperArmEncoderID = 4;
         public static final int lowerArmEncoderID = 5;
 
-        // Mag encoder offsets FIXME
-        public static final double upperArmEncoderOffset = 999.999;
-        public static final double lowerArmEncoderOffset = 999.999;
+        // Mag encoder offsets
+        public static final double upperArmEncoderOffset = 14.75;
+        public static final double lowerArmEncoderOffset = 328.32;
 
         // Pneumatics IDs
         public static final int pHubID = 11;
