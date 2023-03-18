@@ -102,7 +102,7 @@ public class Swerve extends SubsystemBase {
 
     public void zeroGyro() {
         ahrs.reset();
-        System.out.println("\nnavX gyro reset\n");
+        //System.out.println("\nnavX gyro reset\n");
     }
 
     public Rotation2d getYaw() {
