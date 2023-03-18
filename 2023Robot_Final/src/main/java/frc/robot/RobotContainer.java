@@ -69,7 +69,8 @@ public class RobotContainer {
 
         cross.onTrue(new InstantCommand(() -> arm.toggleClaw()));
 
-        circle.whileTrue(new ArmPID(arm, 30, 30));
+        circle.onTrue(new ArmPID(arm, 30, 30));
+        //circle.whileTrue(new ArmPID(arm, leftStickY, leftStickX));
 
         triangle.onTrue(new InstantCommand(() -> s_Swerve.zeroGyro()));
 

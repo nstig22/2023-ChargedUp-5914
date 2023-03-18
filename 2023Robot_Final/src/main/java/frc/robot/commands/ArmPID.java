@@ -88,7 +88,8 @@ public class ArmPID extends CommandBase {
         this.xSetpoint = xSetpoint;
         this.ySetpoint = ySetpoint;
 
-        arm.resetFalconEncoders();
+        //arm.resetFalconEncoders();
+        
 
         time = new Timer();
 
@@ -126,7 +127,14 @@ public class ArmPID extends CommandBase {
         // appropriate movement. We want to make sure that any
         // movements in progress are complete.
 
-        if (MoveComplete == true) {
+        if (MoveComplete == true){
+            moveInit = 1;
+            MoveComplete = false;
+            System.out.println("\nMoving arm\n");
+            move2Position(X, Y);
+        }
+
+        /*if (MoveComplete == true) {
 
             MidLevelEnabled = true;
             LowLevelEnabled = false;
@@ -167,7 +175,7 @@ public class ArmPID extends CommandBase {
         if (UpperLevelEnabled == true) {
             processUpperLevel();
             // arm.rotateUpperArm_CCW(20.0);
-        }
+        }*/
     }
 
     @Override
