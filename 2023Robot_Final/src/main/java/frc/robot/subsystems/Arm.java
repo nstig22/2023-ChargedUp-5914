@@ -30,6 +30,9 @@ public class Arm extends SubsystemBase {
     PneumaticHub pHub;
     DoubleSolenoid armSolenoid;
 
+    // Global inverted variable for switching heading
+    Boolean inverted = false;
+
     // Constructor
     public Arm() {
         // Motor configs
@@ -82,7 +85,7 @@ public class Arm extends SubsystemBase {
         return lowerArmMotor.getSelectedSensorPosition(0);
     }
 
-    //Reset falcon encoders FIXME
+    // Reset falcon encoders FIXME
 
     // Get mag encoder values
     public double getUpperMagEncoder() {
@@ -95,8 +98,9 @@ public class Arm extends SubsystemBase {
 
     // Reset falcon encoders FIXME
     public void resetFalconEncoders() {
-        upperArmMotor.setSelectedSensorPosition(Conversions.degreesToFalcon(getUpperMagEncoder() - Constants.Arm.upperArmEncoderOffset,
-        Constants.Arm.upperGearReduction));
+        upperArmMotor.setSelectedSensorPosition(
+                Conversions.degreesToFalcon(getUpperMagEncoder() - Constants.Arm.upperArmEncoderOffset,
+                        Constants.Arm.upperGearReduction));
         lowerArmMotor.setSelectedSensorPosition(getLowerMagEncoder());
     }
 
