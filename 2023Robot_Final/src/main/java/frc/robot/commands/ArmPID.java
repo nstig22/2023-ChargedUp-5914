@@ -187,7 +187,12 @@ public class ArmPID extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        return false;
+        if (MoveComplete){
+            return true;
+        }
+        else{
+            return false;
+        }
     }
 
     /****************************************************************/
