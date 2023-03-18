@@ -47,13 +47,13 @@ public class RobotContainer {
      * The container for the robot. Contains subsystems, OI devices, and commands.
      */
     public RobotContainer() {
-        s_Swerve.setDefaultCommand(
+        /*s_Swerve.setDefaultCommand(
                 new TeleopSwerve(
                         s_Swerve,
                         () -> -stick.getRawAxis(leftStickY),
                         () -> -stick.getRawAxis(leftStickX),
                         () -> -stick.getRawAxis(rightStickX),
-                        () -> leftBumper.getAsBoolean()));
+                        () -> leftBumper.getAsBoolean()));*/
 
         arm.setDefaultCommand(
                 new ArmJoystick(arm, () -> stick.getRawAxis(rightStickY), () -> stick.getRawAxis(leftTrigger),
@@ -69,7 +69,8 @@ public class RobotContainer {
 
         cross.onTrue(new InstantCommand(() -> arm.toggleClaw()));
 
-        circle.whileTrue(new ArmPID(arm, 30, 30));
+        circle.onTrue(new ArmPID(arm, 30, 30));
+        //circle.whileTrue(new ArmPID(arm, leftStickY, leftStickX));
 
         triangle.onTrue(new InstantCommand(() -> s_Swerve.zeroGyro()));
 

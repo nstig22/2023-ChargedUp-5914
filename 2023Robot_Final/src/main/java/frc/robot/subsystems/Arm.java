@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.smartdashboard.*;
+import frc.lib.math.Conversions;
 import frc.robot.Constants;
 
 public class Arm extends SubsystemBase {
@@ -28,6 +29,9 @@ public class Arm extends SubsystemBase {
     Compressor comp;
     PneumaticHub pHub;
     DoubleSolenoid armSolenoid;
+
+    // Global inverted variable for switching heading
+    Boolean inverted = false;
 
     // Constructor
     public Arm() {
@@ -81,6 +85,8 @@ public class Arm extends SubsystemBase {
         return lowerArmMotor.getSelectedSensorPosition(0);
     }
 
+    // Reset falcon encoders FIXME
+
     // Get mag encoder values
     public double getUpperMagEncoder() {
         return ((upperArmEncoder.getAbsolutePosition()) * 360);
@@ -90,9 +96,11 @@ public class Arm extends SubsystemBase {
         return ((lowerArmEncoder.getAbsolutePosition()) * 360);
     }
 
-    // Reset falcon encoders
+    // Reset falcon encoders FIXME
     public void resetFalconEncoders() {
-        upperArmMotor.setSelectedSensorPosition(getUpperMagEncoder());
+        upperArmMotor.setSelectedSensorPosition(
+                Conversions.degreesToFalcon(getUpperMagEncoder() - Constants.Arm.upperArmEncoderOffset,
+                        Constants.Arm.upperGearReduction));
         lowerArmMotor.setSelectedSensorPosition(getLowerMagEncoder());
     }
 
