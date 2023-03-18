@@ -29,6 +29,9 @@ public class Arm extends SubsystemBase {
     PneumaticHub pHub;
     DoubleSolenoid armSolenoid;
 
+    //Global inverted variable for switching heading
+    Boolean inverted = false;
+
     // Constructor
     public Arm() {
         // Motor configs
@@ -60,7 +63,7 @@ public class Arm extends SubsystemBase {
 
         armSolenoid.set(Value.kReverse);
 
-        comp.enableAnalog(110, 120); // FIXME
+        comp.enableAnalog(110, 120);
     }
 
     // Set motor values
@@ -99,13 +102,23 @@ public class Arm extends SubsystemBase {
     // Toggle pneumatics
     public void toggleClaw() {
         armSolenoid.toggle();
-        System.out.println("\nClaw toggled.\n");
+        //System.out.println("\nClaw toggled.\n");
     }
 
     // Switch heading
     public void switchHeading() {
-        upperArmMotor.setInverted(true);
-        lowerArmMotor.setInverted(true);
+        inverted = !inverted;
+        
+        upperArmMotor.setInverted(inverted);
+        lowerArmMotor.setInverted(inverted);
+        
+
+        if (inverted){
+            System.out.println("\nInverted == true\n");
+        }
+        else if (!inverted){
+            System.out.println("\nInverted == false\n");
+        }
     }
 
     // TODO Implement limit to avoid extending beyond max height
