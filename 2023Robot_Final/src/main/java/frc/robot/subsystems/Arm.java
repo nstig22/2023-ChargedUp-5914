@@ -1,9 +1,12 @@
 package frc.robot.subsystems;
 
+import java.util.function.BooleanSupplier;
+
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
@@ -20,6 +23,7 @@ public class Arm extends SubsystemBase {
     // Motors
     TalonFX upperArmMotor;
     TalonFX lowerArmMotor;
+    TalonSRX windowMotor;
 
     // Mag encoders
     DutyCycleEncoder upperArmEncoder;
@@ -38,6 +42,8 @@ public class Arm extends SubsystemBase {
         // Motor configs
         upperArmMotor = new TalonFX(Constants.Arm.upperArmMotorID);
         lowerArmMotor = new TalonFX(Constants.Arm.lowerArmMotorID);
+
+        windowMotor = new TalonSRX(Constants.Arm.windowMotorID);
 
         upperArmMotor.setNeutralMode(NeutralMode.Brake);
         lowerArmMotor.setNeutralMode(NeutralMode.Brake);
@@ -74,6 +80,40 @@ public class Arm extends SubsystemBase {
 
     public void setLowerMotor(double power) {
         lowerArmMotor.set(ControlMode.PercentOutput, power);
+    }
+
+    public void windowMotorForward(BooleanSupplier yes){
+        if (yes.getAsBoolean()){
+            windowMotor.set(ControlMode.PercentOutput, 1);
+            System.out.println("\nMoving window motor forwards.\n");
+        }
+        else{
+            windowMotor.set(ControlMode.PercentOutput, 0);
+        }
+        return;
+    }
+
+    public void moveWindowMotor(BooleanSupplier b1, BooleanSupplier b2){
+        if (b1.getAsBoolean()){
+            windowMotor.set(ControlMode.PercentOutput, 1);
+        }
+        if (b2.getAsBoolean()){
+            windowMotor.set(ControlMode.PercentOutput, -1);
+        }
+        else{
+            windowMotor.set(ControlMode.PercentOutput, 0);
+        }
+    }
+
+    public void windowMotorBackward(BooleanSupplier yes){
+        if (yes.getAsBoolean()){
+            windowMotor.set(ControlMode.PercentOutput, -1);
+            System.out.println("\nMoving window motor backwards.\n");
+        }
+        else{
+            windowMotor.set(ControlMode.PercentOutput, 0);
+        }
+        return;
     }
 
     // Get falcon encoder values

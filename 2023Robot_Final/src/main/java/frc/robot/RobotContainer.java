@@ -37,7 +37,10 @@ public class RobotContainer {
     private final JoystickButton circle = new JoystickButton(stick, PS4Controller.Button.kCircle.value);
     private final JoystickButton triangle = new JoystickButton(stick, PS4Controller.Button.kTriangle.value);
     private final JoystickButton leftBumper = new JoystickButton(stick, PS4Controller.Button.kL1.value);
+    private final JoystickButton rightBumper = new JoystickButton(stick, PS4Controller.Button.kR1.value);
     private final JoystickButton touchpad = new JoystickButton(stick, PS4Controller.Button.kTouchpad.value);
+    private final JoystickButton share = new JoystickButton(stick, PS4Controller.Button.kShare.value);
+    private final JoystickButton options = new JoystickButton(stick, PS4Controller.Button.kOptions.value);
 
     /* Subsystems */
     private final Swerve s_Swerve = new Swerve();
@@ -57,7 +60,7 @@ public class RobotContainer {
 
         arm.setDefaultCommand(
                 new ArmJoystick(arm, () -> stick.getRawAxis(rightStickY), () -> stick.getRawAxis(leftTrigger),
-                        () -> -stick.getRawAxis(rightTrigger)));
+                        () -> -stick.getRawAxis(rightTrigger), () -> share.getAsBoolean(), () -> options.getAsBoolean()));
 
         // Configure the button bindings
         configureButtonBindings();
@@ -70,7 +73,7 @@ public class RobotContainer {
         cross.onTrue(new InstantCommand(() -> arm.toggleClaw()));
 
         circle.onTrue(new ArmPID(arm, 30, 30));
-        //circle.whileTrue(new ArmPID(arm, leftStickY, leftStickX));
+        //circle.onTrue(new ArmPID(arm, circle, square, rightBumper));
 
         triangle.onTrue(new InstantCommand(() -> s_Swerve.zeroGyro()));
 

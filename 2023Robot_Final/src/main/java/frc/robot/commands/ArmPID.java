@@ -2,6 +2,9 @@ package frc.robot.commands;
 
 import frc.robot.Constants;
 import frc.robot.subsystems.Arm;
+
+import java.util.function.BooleanSupplier;
+
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 
@@ -84,6 +87,10 @@ public class ArmPID extends CommandBase {
 
     private Timer time;
 
+    BooleanSupplier low;
+    BooleanSupplier mid;
+    BooleanSupplier high;
+
     public ArmPID(Arm arm, double xSetpoint, double ySetpoint) {
         this.arm = arm;
         this.xSetpoint = xSetpoint;
@@ -102,6 +109,21 @@ public class ArmPID extends CommandBase {
         addRequirements(arm);
     }
 
+    /*public ArmPID(Arm arm, BooleanSupplier low, BooleanSupplier mid, BooleanSupplier high){
+        this.arm = arm;
+        this.low = low;
+        this.mid = mid;
+        this.high = high;
+
+        time = new Timer();
+
+        delay = new Delay();
+
+        time.start();
+
+        addRequirements(arm);
+    }*/
+
     @Override
     public void initialize() {
         System.out.println("\nArmPID command started.\n");
@@ -114,12 +136,12 @@ public class ArmPID extends CommandBase {
         X = xSetpoint;
         Y = ySetpoint;
 
-        computeArmAngles(X, Y);
+        //computeArmAngles(X, Y);
 
         phi_degrees = Phi * 180.0 / Math.PI;
         theta_degrees = Theta * 180.0 / Math.PI;
 
-        System.out.printf("\nPhi = %.3f  Theta = %.3f degrees", phi_degrees, theta_degrees);
+        //System.out.printf("\nPhi = %.3f  Theta = %.3f degrees", phi_degrees, theta_degrees);
     }
 
     @Override
