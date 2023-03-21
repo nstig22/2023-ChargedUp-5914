@@ -49,17 +49,19 @@ public class Arm extends SubsystemBase {
         lowerArmMotor.setNeutralMode(NeutralMode.Brake);
 
         upperArmMotor.setInverted(false);
-        lowerArmMotor.setInverted(false);
+        lowerArmMotor.setInverted(true);
 
-        lowerArmMotor.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 50);
         upperArmMotor.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 50);
+        lowerArmMotor.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 50);
+
+        resetFalconEncoders();
 
         // Encoders
         upperArmEncoder = new DutyCycleEncoder(Constants.Arm.upperArmEncoderID);
-        upperArmEncoder.setPositionOffset(Constants.Arm.upperArmEncoderOffset / 360);
+        //upperArmEncoder.setPositionOffset(Constants.Arm.upperArmEncoderOffset / 360);
 
         lowerArmEncoder = new DutyCycleEncoder(Constants.Arm.lowerArmEncoderID);
-        lowerArmEncoder.setPositionOffset(Constants.Arm.lowerArmEncoderOffset / 360);
+        //lowerArmEncoder.setPositionOffset(Constants.Arm.lowerArmEncoderOffset / 360);
 
         // Pneumatics
         comp = new Compressor(Constants.Arm.compID, PneumaticsModuleType.REVPH);
@@ -82,35 +84,32 @@ public class Arm extends SubsystemBase {
         lowerArmMotor.set(ControlMode.PercentOutput, power);
     }
 
-    public void windowMotorForward(BooleanSupplier yes){
-        if (yes.getAsBoolean()){
+    public void windowMotorForward(BooleanSupplier yes) {
+        if (yes.getAsBoolean()) {
             windowMotor.set(ControlMode.PercentOutput, 1);
             System.out.println("\nMoving window motor forwards.\n");
-        }
-        else{
+        } else {
             windowMotor.set(ControlMode.PercentOutput, 0);
         }
         return;
     }
 
-    public void moveWindowMotor(BooleanSupplier b1, BooleanSupplier b2){
-        if (b1.getAsBoolean()){
+    public void moveWindowMotor(BooleanSupplier b1, BooleanSupplier b2) {
+        if (b1.getAsBoolean()) {
             windowMotor.set(ControlMode.PercentOutput, 1);
         }
-        if (b2.getAsBoolean()){
+        if (b2.getAsBoolean()) {
             windowMotor.set(ControlMode.PercentOutput, -1);
-        }
-        else{
+        } else {
             windowMotor.set(ControlMode.PercentOutput, 0);
         }
     }
 
-    public void windowMotorBackward(BooleanSupplier yes){
-        if (yes.getAsBoolean()){
+    public void windowMotorBackward(BooleanSupplier yes) {
+        if (yes.getAsBoolean()) {
             windowMotor.set(ControlMode.PercentOutput, -1);
             System.out.println("\nMoving window motor backwards.\n");
-        }
-        else{
+        } else {
             windowMotor.set(ControlMode.PercentOutput, 0);
         }
         return;
@@ -141,27 +140,27 @@ public class Arm extends SubsystemBase {
         upperArmMotor.setSelectedSensorPosition(
                 Conversions.degreesToFalcon(getUpperMagEncoder() - Constants.Arm.upperArmEncoderOffset,
                         Constants.Arm.upperGearReduction));
-        lowerArmMotor.setSelectedSensorPosition(getLowerMagEncoder());
+        lowerArmMotor.setSelectedSensorPosition(
+                Conversions.degreesToFalcon(getLowerMagEncoder() - Constants.Arm.lowerArmEncoderOffset,
+                        Constants.Arm.lowerGearReduction * Constants.Arm.lowerChainReduction));
     }
 
     // Toggle pneumatics
     public void toggleClaw() {
         armSolenoid.toggle();
-        //System.out.println("\nClaw toggled.\n");
+        // System.out.println("\nClaw toggled.\n");
     }
 
     // Switch heading
     public void switchHeading() {
         inverted = !inverted;
-        
-        upperArmMotor.setInverted(inverted);
-        lowerArmMotor.setInverted(inverted);
-        
 
-        if (inverted){
+        upperArmMotor.setInverted(inverted);
+        lowerArmMotor.setInverted(!inverted);
+
+        if (inverted) {
             System.out.println("\nInverted == true\n");
-        }
-        else if (!inverted){
+        } else if (!inverted) {
             System.out.println("\nInverted == false\n");
         }
     }

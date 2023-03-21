@@ -1,6 +1,5 @@
 package frc.robot.commands;
 
-import frc.robot.Constants;
 import frc.robot.subsystems.Arm;
 
 import java.util.function.BooleanSupplier;
@@ -83,6 +82,11 @@ public class ArmPID extends CommandBase {
     double lowerError_sum = 0.0;
     double lowerError_rate = 0.0;
 
+    boolean RevLowLevelEnabled = false;
+    boolean RevMidLevelEnabled = false;
+    boolean RevUpperLevelEnabled = false;
+    boolean ResetEnabled = false;
+
     private Delay delay;
 
     private Timer time;
@@ -96,8 +100,7 @@ public class ArmPID extends CommandBase {
         this.xSetpoint = xSetpoint;
         this.ySetpoint = ySetpoint;
 
-        //arm.resetFalconEncoders();
-        
+        // arm.resetFalconEncoders();
 
         time = new Timer();
 
@@ -109,20 +112,23 @@ public class ArmPID extends CommandBase {
         addRequirements(arm);
     }
 
-    /*public ArmPID(Arm arm, BooleanSupplier low, BooleanSupplier mid, BooleanSupplier high){
-        this.arm = arm;
-        this.low = low;
-        this.mid = mid;
-        this.high = high;
-
-        time = new Timer();
-
-        delay = new Delay();
-
-        time.start();
-
-        addRequirements(arm);
-    }*/
+    /*
+     * public ArmPID(Arm arm, BooleanSupplier low, BooleanSupplier mid,
+     * BooleanSupplier high){
+     * this.arm = arm;
+     * this.low = low;
+     * this.mid = mid;
+     * this.high = high;
+     * 
+     * time = new Timer();
+     * 
+     * delay = new Delay();
+     * 
+     * time.start();
+     * 
+     * addRequirements(arm);
+     * }
+     */
 
     @Override
     public void initialize() {
@@ -136,12 +142,13 @@ public class ArmPID extends CommandBase {
         X = xSetpoint;
         Y = ySetpoint;
 
-        //computeArmAngles(X, Y);
+        // computeArmAngles(X, Y);
 
-        phi_degrees = Phi * 180.0 / Math.PI;
-        theta_degrees = Theta * 180.0 / Math.PI;
+        // phi_degrees = Phi * 180.0 / Math.PI;
+        // theta_degrees = Theta * 180.0 / Math.PI;
 
-        //System.out.printf("\nPhi = %.3f  Theta = %.3f degrees", phi_degrees, theta_degrees);
+        // System.out.printf("\nPhi = %.3f Theta = %.3f degrees", phi_degrees,
+        // theta_degrees);
     }
 
     @Override
@@ -150,55 +157,57 @@ public class ArmPID extends CommandBase {
         // appropriate movement. We want to make sure that any
         // movements in progress are complete.
 
-        if (MoveComplete == true){
+        if (MoveComplete == true && endCmd == false) {
             moveInit = 1;
             MoveComplete = false;
             System.out.println("\nMoving arm\n");
             move2Position(X, Y);
         }
 
-        /*if (MoveComplete == true) {
-
-            MidLevelEnabled = true;
-            LowLevelEnabled = false;
-            UpperLevelEnabled = false;
-            moveInit = 1;
-            MoveComplete = false;
-            System.out.printf("\nSetting to mid level\n");
-
-        }
-        if (MidLevelEnabled == true) {
-            processMidLevel();
-        }
-
-        if (MoveComplete == true) {
-
-            MidLevelEnabled = false;
-            LowLevelEnabled = true;
-            UpperLevelEnabled = false;
-            moveInit = 1;
-            MoveComplete = false;
-            System.out.printf("\nSetting to low level\n");
-
-        }
-        if (LowLevelEnabled == true) {
-            processLowLevel();
-        }
-
-        if (MoveComplete == true) {
-
-            MidLevelEnabled = false;
-            LowLevelEnabled = false;
-            UpperLevelEnabled = true;
-            moveInit = 1;
-            MoveComplete = false;
-            System.out.printf("\nSetting to uppper level\n");
-
-        }
-        if (UpperLevelEnabled == true) {
-            processUpperLevel();
-            // arm.rotateUpperArm_CCW(20.0);
-        }*/
+        /*
+         * if (MoveComplete == true) {
+         * 
+         * MidLevelEnabled = true;
+         * LowLevelEnabled = false;
+         * UpperLevelEnabled = false;
+         * moveInit = 1;
+         * MoveComplete = false;
+         * System.out.printf("\nSetting to mid level\n");
+         * 
+         * }
+         * if (MidLevelEnabled == true) {
+         * processMidLevel();
+         * }
+         * 
+         * if (MoveComplete == true) {
+         * 
+         * MidLevelEnabled = false;
+         * LowLevelEnabled = true;
+         * UpperLevelEnabled = false;
+         * moveInit = 1;
+         * MoveComplete = false;
+         * System.out.printf("\nSetting to low level\n");
+         * 
+         * }
+         * if (LowLevelEnabled == true) {
+         * processLowLevel();
+         * }
+         * 
+         * if (MoveComplete == true) {
+         * 
+         * MidLevelEnabled = false;
+         * LowLevelEnabled = false;
+         * UpperLevelEnabled = true;
+         * moveInit = 1;
+         * MoveComplete = false;
+         * System.out.printf("\nSetting to uppper level\n");
+         * 
+         * }
+         * if (UpperLevelEnabled == true) {
+         * processUpperLevel();
+         * // arm.rotateUpperArm_CCW(20.0);
+         * }
+         */
     }
 
     @Override
@@ -210,13 +219,164 @@ public class ArmPID extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        if (endCmd){
+        if (endCmd) {
             return true;
-        }
-        else{
+        } else {
             return false;
         }
     }
+
+    /*void processArmButtons() {
+
+        // Here is the reset function
+        if ((stick.getRawButtonPressed(5) == true) && (MoveComplete == true)) {
+            MidLevelEnabled = false;
+            LowLevelEnabled = false;
+            UpperLevelEnabled = false;
+            RevMidLevelEnabled = false;
+            RevLowLevelEnabled = false;
+            RevUpperLevelEnabled = false;
+            ResetEnabled = true;
+            moveInit = 1;
+            MoveComplete = false;
+            System.out.printf("\nButton 5 pressed.\n");
+            reset();
+
+        }
+        if (ResetEnabled == true) {
+            reset();
+        }
+
+        // Low position
+        if ((stick.getRawButtonReleased(4) == true) &&
+                (stick.getRawButtonPressed(1) == true) &&
+                (MoveComplete == true)) {
+            MidLevelEnabled = false;
+            LowLevelEnabled = true;
+            UpperLevelEnabled = false;
+            RevMidLevelEnabled = false;
+            RevLowLevelEnabled = false;
+            RevUpperLevelEnabled = false;
+            ResetEnabled = false;
+            moveInit = 1;
+            MoveComplete = false;
+            System.out.printf("\nButton 4 released.\n");
+            System.out.printf("\nButton 1 pressed.\n");
+
+        }
+        if (LowLevelEnabled == true) {
+            processLowLevel();
+        }
+
+        // Mid position
+        if ((stick.getRawButtonReleased(4) == true) &&
+                (stick.getRawButtonPressed(2) == true) &&
+                (MoveComplete == true)) {
+            MidLevelEnabled = true;
+            LowLevelEnabled = false;
+            UpperLevelEnabled = false;
+            RevMidLevelEnabled = false;
+            RevLowLevelEnabled = false;
+            RevUpperLevelEnabled = false;
+            ResetEnabled = false;
+            moveInit = 1;
+            MoveComplete = false;
+            System.out.printf("\nButton 4 released.\n");
+            System.out.printf("\nButton 2 pressed.\n");
+
+        }
+        if (MidLevelEnabled == true) {
+            processMidLevel();
+        }
+
+        // Upper position
+        if ((stick.getRawButtonReleased(4) == true) &&
+                (stick.getRawButtonPressed(3) == true) &&
+                (MoveComplete == true)) {
+            MidLevelEnabled = false;
+            LowLevelEnabled = false;
+            UpperLevelEnabled = true;
+            RevMidLevelEnabled = false;
+            RevLowLevelEnabled = false;
+            RevUpperLevelEnabled = false;
+            ResetEnabled = false;
+            moveInit = 1;
+            MoveComplete = false;
+            System.out.printf("\nButton 4 released.\n");
+            System.out.printf("\nButton 3 pressed.\n");
+
+        }
+        if (UpperLevelEnabled == true) {
+            processUpperLevel();
+        }
+
+        // Reverse lower position
+        if ((stick.getRawButtonPressed(4) == true) &&
+                (stick.getRawButtonPressed(1) == true) &&
+                (MoveComplete == true)) {
+
+            MidLevelEnabled = false;
+            LowLevelEnabled = false;
+            UpperLevelEnabled = false;
+            RevMidLevelEnabled = false;
+            RevLowLevelEnabled = true;
+            RevUpperLevelEnabled = false;
+            ResetEnabled = false;
+            moveInit = 1;
+            MoveComplete = false;
+            System.out.printf("\nButton 4 pressed.\n");
+            System.out.printf("\nButton 1 pressed.\n");
+
+        }
+        if (RevLowLevelEnabled == true) {
+            arm.processRevLowLevel();
+        }
+
+        // Reverse mid position
+        if ((stick.getRawButtonPressed(4) == true) &&
+                (stick.getRawButtonPressed(2) == true) &&
+                (MoveComplete == true)) {
+
+            MidLevelEnabled = false;
+            LowLevelEnabled = false;
+            UpperLevelEnabled = false;
+            RevMidLevelEnabled = true;
+            RevLowLevelEnabled = false;
+            RevUpperLevelEnabled = false;
+            ResetEnabled = false;
+            moveInit = 1;
+            MoveComplete = false;
+            System.out.printf("\nButton 4 pressed.\n");
+            System.out.printf("\nButton 2 pressed.\n");
+
+        }
+        if (RevMidLevelEnabled == true) {
+            processRevMidLevel();
+        }
+
+        // Reverse upper position
+        if ((stick.getRawButtonPressed(4) == true) &&
+                (stick.getRawButtonPressed(3) == true) &&
+                (MoveComplete == true)) {
+
+            MidLevelEnabled = false;
+            LowLevelEnabled = false;
+            UpperLevelEnabled = false;
+            RevMidLevelEnabled = false;
+            RevLowLevelEnabled = false;
+            RevUpperLevelEnabled = true;
+            ResetEnabled = false;
+            moveInit = 1;
+            MoveComplete = false;
+            System.out.printf("\nButton 4 pressed.\n");
+            System.out.printf("\nButton 3 pressed.\n");
+
+        }
+        if (RevUpperLevelEnabled == true) {
+            processRevUpperLevel();
+        }
+
+    }*/
 
     /****************************************************************/
     // These function relate to the mechanical gear reductions
@@ -244,9 +404,10 @@ public class ArmPID extends CommandBase {
     double computeLowerDriveRatio() {
         double dtmp;
 
-        dtmp = Constants.Arm.lowerGearReduction * Constants.Arm.lowerChainReduction;
+        dtmp = lowerGearReduction * lowerChainReduction;
 
         return (dtmp);
+
     }
 
     /////////////////////////////////////////////////////////////////
@@ -304,6 +465,7 @@ public class ArmPID extends CommandBase {
         degrees = counts / LowerCounts_perDegree();
 
         return (degrees);
+
     }
 
     /////////////////////////////////////////////////////////////////
@@ -325,9 +487,10 @@ public class ArmPID extends CommandBase {
     double computeUpperDriveRatio() {
         double dtmp;
 
-        dtmp = Constants.Arm.upperGearReduction;
+        dtmp = upperGearReduction;
 
         return (dtmp);
+
     }
 
     /////////////////////////////////////////////////////////////////
@@ -388,9 +551,45 @@ public class ArmPID extends CommandBase {
 
     }
 
+    /////////////////////////////////////////////////////////////////
+    // Function: int process***Level()
+    /////////////////////////////////////////////////////////////////
+    //
+    // Purpose: Processes the arm movements to specific coordinates
+    //
+    // Arguments:void
+    //
+    // Returns: zero, may be modified at a future date to return
+    // an error code of some sort.
+    //
+    // Remarks: Coordinates for the various levels TBD.
+    //
+    /////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////
+    int reset() {
+        if (MoveComplete == false) {
+            X = 0.0;
+            Y = 17.625; // This is the height above the floor
+                        // of the centerline of the grabber
+
+            move2Position(X, Y);
+        }
+        return (0);
+    }
+
     int processLowLevel() {
         if (MoveComplete == false) {
-            X = 24;
+            X = 26.0;
+            Y = 6.5;
+
+            move2Position(X, Y);
+        }
+        return (0);
+    }
+
+    int processRevLowLevel() {
+        if (MoveComplete == false) {
+            X = -26.0;
             Y = 6.5;
 
             move2Position(X, Y);
@@ -399,9 +598,18 @@ public class ArmPID extends CommandBase {
     }
 
     int processMidLevel() {
-
         if (MoveComplete == false) {
             X = 30;
+            Y = 24;
+
+            move2Position(X, Y);
+        }
+        return (0);
+    }
+
+    int processRevMidLevel() {
+        if (MoveComplete == false) {
+            X = -30;
             Y = 24;
 
             move2Position(X, Y);
@@ -419,9 +627,35 @@ public class ArmPID extends CommandBase {
         return (0);
     }
 
+    int processRevUpperLevel() {
+        if (MoveComplete == false) {
+            X = -30;
+            Y = 36;
+
+            move2Position(X, Y);
+        }
+        return (0);
+    }
+
+    /////////////////////////////////////////////////////////////////
+    // Function: double move2Position(double x, double y)
+    /////////////////////////////////////////////////////////////////
+    //
+    // Purpose: Moves arm grabber to coordinates (x,y)
+    //
+    // Arguments:Accepts the coordinates (x,y) as doubles
+    //
+    // Returns: Zero
+    //
+    // Remarks:
+    //
+    /////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////
     int move2Position(double x, double y) {
         double upper_degrees = 0;
         double lower_degrees = 0;
+
+        System.out.println("\nmove2Position calleed\n");
 
         if (moveInit == 1) {
 
@@ -473,7 +707,6 @@ public class ArmPID extends CommandBase {
 
         if ((lowerRotation_complete == true) && (upperRotation_complete == true)) {
             MoveComplete = true;
-            endCmd = true;
             System.out.printf("\nMovement Complete\n");
         }
         return (0);
@@ -539,6 +772,8 @@ public class ArmPID extends CommandBase {
         double min_theta = 1000.0;
         double delta = 0.0;
         double min_delta = 1000.0;
+
+        System.out.println("\ncomputeArmAngles callsd\n");
 
         // limit phi to +/-90 degrees or +/-PI/2 radians, solve for the angle phi that
         // results in the minimum delta
@@ -647,6 +882,7 @@ public class ArmPID extends CommandBase {
         }
 
         return (error);
+
     }
 
     /////////////////////////////////////////////////////////////////
@@ -704,7 +940,7 @@ public class ArmPID extends CommandBase {
             if (power > 0.5)
                 power = 0.5;
             if (power < 0.1)
-                power = 0.1;
+                power = 0.2;
 
             // Get it started
             arm.setUpperMotor(power);
@@ -716,6 +952,7 @@ public class ArmPID extends CommandBase {
             upperLast_time = 0.0;
 
             upperRotation_complete = false;
+
         }
 
         if (upperRotation_complete == false) {
@@ -733,7 +970,7 @@ public class ArmPID extends CommandBase {
                 error = upperTarget - upperCount; // In this case should be positive
 
                 if ((Math.abs(error) < upperDeadband) || (error < 0.0)) {
-                    arm.setUpperMotor(0.0);
+                    arm.setUpperMotor(0);
                     upperRotation_complete = true;
                     System.out.printf("\nUpper Target = %.3f\n", upperTarget);
                     System.out.printf("\nUpper Final count = %.3f  error = %.3f\n", upperCount, error);
@@ -757,7 +994,7 @@ public class ArmPID extends CommandBase {
                 if (power > 0.5)
                     power = 0.5;
                 if (power < 0.1)
-                    power = 0.1;
+                    power = 0.2;
 
                 arm.setUpperMotor(power);
 
@@ -853,6 +1090,7 @@ public class ArmPID extends CommandBase {
             upperLast_time = 0.0;
 
             upperRotation_complete = false;
+
         }
 
         if (upperRotation_complete == false) {
@@ -870,7 +1108,7 @@ public class ArmPID extends CommandBase {
                 error = upperCount - upperTarget; // In this case should be positive
 
                 if ((Math.abs(error) < upperDeadband) || (error < 0.0)) {
-                    arm.setUpperMotor(0.0);
+                    arm.setUpperMotor(0);
                     upperRotation_complete = true;
                     System.out.printf("\nUpper Target = %.3f\n", upperTarget);
                     System.out.printf("\nUpper Final count = %.3f  error = %.3f\n", upperCount, error);
@@ -880,9 +1118,10 @@ public class ArmPID extends CommandBase {
                 if (upperLast_time != 0.0)
                     dt = current_time - upperLast_time;
 
-                if (dt > 0.0) {
+                if (dt > 0.0)
                     upperError_rate = (error - upperLast_error) / dt;
-                }
+
+                System.out.printf("\ndt=%.3f\n", dt);
 
                 // Start off integrating when within some percentage of the target
                 // Note the use of the absolute value of the target for
@@ -924,6 +1163,7 @@ public class ArmPID extends CommandBase {
         } // if(turn_motion_complete==false)
 
         return (computeUpperDegrees_fromCounts(upperLast_error));
+        // return(upperLast_error);
 
     }
 
@@ -962,6 +1202,20 @@ public class ArmPID extends CommandBase {
 
     }
 
+    /////////////////////////////////////////////////////////////////
+    // Function:
+    /////////////////////////////////////////////////////////////////
+    //
+    // Purpose:
+    //
+    // Arguments:
+    //
+    // Returns:
+    //
+    // Remarks:
+    //
+    /////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////
     double rotateLowerArm_CCW(double degrees) {
         boolean debug = false;
         double error = 0;
@@ -1010,6 +1264,7 @@ public class ArmPID extends CommandBase {
             lowerError_sum = 0.0;
             lowerError_rate = 0.0;
             lowerLast_time = 0.0;
+
         }
 
         if (lowerRotation_complete == false) {
@@ -1027,7 +1282,7 @@ public class ArmPID extends CommandBase {
                 error = lowerCount - lowerTarget; // In this case should be positive
 
                 if ((Math.abs(error) < lowerDeadband) || (error < 0.0)) {
-                    arm.setLowerMotor(0.0);
+                    arm.setLowerMotor(0);
                     lowerRotation_complete = true;
                     System.out.printf("\nLower: target = %.3f\n", lowerTarget);
                     System.out.printf("\nLower: final count = %.3f  final error = %.3f\n", lowerCount, error);
@@ -1078,8 +1333,23 @@ public class ArmPID extends CommandBase {
         } // if(turn_motion_complete==false)
 
         return (computeLowerDegrees_fromCounts(lowerLast_error));
+
     }
 
+    /////////////////////////////////////////////////////////////////
+    // Function:
+    /////////////////////////////////////////////////////////////////
+    //
+    // Purpose:
+    //
+    // Arguments:
+    //
+    // Returns:
+    //
+    // Remarks:
+    //
+    /////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////
     double rotateLowerArm_CW(double degrees) {
         boolean debug = false;
         double error = 0;
@@ -1145,7 +1415,7 @@ public class ArmPID extends CommandBase {
                 error = lowerTarget - lowerCount; // In this case should be positive
 
                 if ((Math.abs(error) < lowerDeadband) || (error < 0.0)) {
-                    arm.setLowerMotor(0.0);
+                    arm.setLowerMotor(0);
                     lowerRotation_complete = true;
                     System.out.printf("\nLower: target = %.3f\n", lowerTarget);
                     System.out.printf("\nLower: final count = %.3f  final error = %.3f\n", lowerCount, error);
@@ -1266,6 +1536,7 @@ public class ArmPID extends CommandBase {
             upperLast_error = 0;
             upperError_sum = 0.0;
             upperError_rate = 0.0;
+
         }
 
         if (upperRotation_complete == false) {
@@ -1283,7 +1554,8 @@ public class ArmPID extends CommandBase {
                 error = upperTarget - upperCount; // In this case should be positive
 
                 if (Math.abs(error) < upperDeadband) {
-                    arm.setUpperMotor(0.0);
+                    arm.setUpperMotor(0);
+
                     upperRotation_complete = true;
                     System.out.printf("\nUpper Target = %.3f\n", upperTarget);
                     System.out.printf("\nUpper Final count = %.3f  error = %.3f\n", upperCount, error);
@@ -1329,7 +1601,23 @@ public class ArmPID extends CommandBase {
         } // if(turn_motion_complete==false)
 
         return (computeUpperDegrees_fromCounts(upperLast_error));
+
     }
+
+    /////////////////////////////////////////////////////////////////
+    // Function:
+    /////////////////////////////////////////////////////////////////
+    //
+    // Purpose:
+    //
+    // Arguments:
+    //
+    // Returns:
+    //
+    // Remarks:
+    //
+    /////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////
 
     double rotateLowerArm_original(double degrees) {
         boolean debug = true;
@@ -1376,6 +1664,7 @@ public class ArmPID extends CommandBase {
             lowerLast_error = 0;
             lowerError_sum = 0.0;
             lowerError_rate = 0.0;
+
         }
 
         if (lowerRotation_complete == false) {
@@ -1393,7 +1682,8 @@ public class ArmPID extends CommandBase {
                 error = lowerTarget - lowerCount; // In this case should be positive
 
                 if ((Math.abs(error) < lowerDeadband) || (error < 0.0)) {
-                    arm.setLowerMotor(0.0);
+                    arm.setLowerMotor(0);
+
                     lowerRotation_complete = true;
                     System.out.printf("\nLower: target = %.3f\n", lowerTarget);
                     System.out.printf("\nLower: final count = %.3f  final error = %.3f\n", lowerCount, error);
@@ -1438,5 +1728,7 @@ public class ArmPID extends CommandBase {
         } // if(turn_motion_complete==false)
 
         return (computeLowerDegrees_fromCounts(lowerLast_error));
+
     }
+
 }
