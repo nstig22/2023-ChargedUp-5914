@@ -1,11 +1,66 @@
+
+/////////////////////////////////////////////////////////////////
+//  File:  RoboticArm.java
+/////////////////////////////////////////////////////////////////
+//
+//  Purpose:  Provides member variables and functions for
+//  operation of the robot arm.  Assumed is that we know the
+//  (x,y) coordinates of the location that we wish to place
+//  the game piece (cone or cube).  Those coordinates depend
+//  on the placement of the robot as the origin of the coordinate
+//  system is the robot center.
+//
+//  It is intended that the movements of the upper and lower
+//  arms are occuring simultaneously.  This implies the need
+//  for duplicate variables for time stamps, error records, etc..
+//  Global variables are distinguished from local ones via the
+//  use of capitals somewhere in the variable name.  This is a
+//  coding convention that is very common and useful.
+//  
+//  Initial development: Feb 20 2023
+//
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//
+//  3/1/2023:  A couple of notes:
+//
+//  The computation of "dt" although done identically in the
+//  upper and lower CW and CCW functions produces a different
+//  result.  The cause at this time is not known.
+//
+//  When looking to stop the motor, failure to recognize when
+//  overshoot occurs (error<0.0) can produce inconsistant 
+//  behavior, e.g., one of the motors keeps running.  The
+//  cause of this is not known.  When upper and lower are
+//  run by themselves this does not appear to occur.  At this
+//  motors are stopped if we are within the deadband or we
+//  have overshot the target.
+//
+//  Excessive debugging outputs may create some problems but
+//  this is not known for sure.
+//
+//  Each movement needs to have the PID parameters tuned.
+//  Longer movements may need the integration started 
+//  earlier.
+//
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//
+//  
+//
+/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+
 package frc.robot.commands;
 
-import frc.robot.subsystems.Arm;
-
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.CommandBase;
 
-public class ArmPID extends CommandBase {
+public class RoboticArm {
+
     // Flags to determine movement status
     boolean upperRotation_complete = false;
     boolean lowerRotation_complete = false;
@@ -41,7 +96,7 @@ public class ArmPID extends CommandBase {
     final double lowerChainReduction = 4.0;
 
     // Mechanical dimensions
-    private double upperArm = 32.50;
+    private double upperArm = 33.50;
     private double lowerArm = 34.625;
     private double pivotHeight = 15.5; // need a good number here
 
@@ -62,107 +117,43 @@ public class ArmPID extends CommandBase {
     double lowerError_sum = 0.0;
     double lowerError_rate = 0.0;
 
+    // Declare as private because we will be using four of these
+    WPI_TalonFX lowerMotor;
+    WPI_TalonFX upperMotor;
+
+    private int lowerMotor_ID = 6;
+    private int upperMotor_ID = 7;
+
     private Delay delay;
 
     private Timer time;
 
-    private Arm arm;
-
-    double xSetpoint;
-    double ySetpoint;
-
     double phi_degrees;
     double theta_degrees;
 
-    public ArmPID(Arm arm, double xSetpoint, double ySetpoint) {
-        this.arm = arm;
-        this.xSetpoint = xSetpoint;
-        this.ySetpoint = ySetpoint;
+    // Constructor
+    RoboticArm() {
+        delay = new Delay();
 
-        // arm.resetFalconEncoders();
+        lowerMotor = new WPI_TalonFX(lowerMotor_ID);
+        lowerMotor.setNeutralMode(NeutralMode.Brake);
+        lowerMotor.setInverted(true);
+        lowerMotor.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 50);
+
+        upperMotor = new WPI_TalonFX(upperMotor_ID);
+        upperMotor.setNeutralMode(NeutralMode.Brake);
+        upperMotor.setInverted(false);
+        upperMotor.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 50);
+
+        // Zero falcon encoders
+        lowerMotor.setSelectedSensorPosition(0);
+        // Zero falcon encoders
+        upperMotor.setSelectedSensorPosition(0);
 
         time = new Timer();
 
-        delay = new Delay();
-
-        // Start the timer
+        // Important to start the clock
         time.start();
-
-        addRequirements(arm);
-    }
-
-    @Override
-    public void initialize() {
-        X = xSetpoint;
-        Y = ySetpoint;
-
-        computeArmAngles(X, Y);
-
-        phi_degrees = Phi * 180.0 / Math.PI;
-        theta_degrees = Theta * 180.0 / Math.PI;
-
-        System.out.printf("\nPhi = %.3f  Theta = %.3f degrees", phi_degrees, theta_degrees);
-    }
-
-    @Override
-    public void execute() {
-        if(lowerRotation_complete==false)    {
-            if(theta_degrees<0.0)  {
-                //  need a positive argument (address later)
-                rotateLowerArm_CCW(-theta_degrees);
-            }   
-            if(theta_degrees>0.0) {
-                rotateLowerArm_CW(theta_degrees);
-            }   
-        }
-        
-        
-        
-    
-        
-        if(upperRotation_complete==false)  {
-    
-          
-          if((phi_degrees+theta_degrees)<0.0)  {
-            rotateUpperArm_CCW(-(phi_degrees+theta_degrees));
-          }  else if((phi_degrees+theta_degrees)>0.0)  {
-            rotateUpperArm_CW(phi_degrees+theta_degrees);
-          }
-        }
-
-        /*if (lowerRotation_complete){
-            System.out.println("\nLower rotation complete\n");
-        }
-        else{
-            System.out.println("\nLower rotation not complete\n");
-        }
-        if (upperRotation_complete){
-            System.out.println("\nUpper rotation complete\n");
-        }
-        else{
-            System.out.println("\nUpper rotation not complete\n");
-        }*/
-    }
-
-    @Override
-    public void end(boolean interrupted) {
-        arm.setUpperMotor(0);
-        arm.setLowerMotor(0);
-        System.out.println("\nArmPID command ended.\n");
-    }
-
-    @Override
-    public boolean isFinished() {
-        if (upperRotation_complete && lowerRotation_complete){
-            upperRotation_complete = false;
-            lowerRotation_complete = false;
-            upperRotate_init = 1;
-            lowerRotate_init = 1;
-            return true;
-        }
-        else{
-            return false;
-        }
     }
 
     /////////////////////////////////////////////////////////////////
@@ -506,7 +497,7 @@ public class ArmPID extends CommandBase {
         // present position to rotate the drive clockwise. We start
         // the motor within this block.
         if (upperRotate_init == 1) {
-            upperCount = arm.getUpperFalconEncoder();
+            upperCount = upperMotor.getSelectedSensorPosition(0);
 
             // Must rotate the upper arm theta + phi. The argument
             // "degrees" is the sum of phi and theta
@@ -523,7 +514,7 @@ public class ArmPID extends CommandBase {
                 power = 0.5;
 
             // Get it started
-            arm.setUpperMotor(power);
+            upperMotor.set(ControlMode.PercentOutput, power);
 
             upperCount = 0;
             upperRotate_init = 0;
@@ -543,12 +534,12 @@ public class ArmPID extends CommandBase {
 
                 delay.delay_milliseconds(5.0);
 
-                upperCount = arm.getUpperFalconEncoder();
+                upperCount = upperMotor.getSelectedSensorPosition(0);
 
                 error = upperTarget - upperCount; // In this case should be positive
 
                 if (Math.abs(error) < upperDeadband) {
-                    arm.setUpperMotor(0);
+                    upperMotor.set(ControlMode.PercentOutput, 0.0);
                     upperRotation_complete = true;
                     System.out.printf("\nUpper Target = %.3f\n", upperTarget);
                     System.out.printf("\nUpper Final count = %.3f  error = %.3f\n", upperCount, error);
@@ -571,7 +562,7 @@ public class ArmPID extends CommandBase {
                 if (power > 0.5)
                     power = 0.5;
 
-                arm.setUpperMotor(power);
+                upperMotor.set(ControlMode.PercentOutput, power);
 
                 if (debug == true) {
                     if (upperUpdate == 5) {
@@ -639,7 +630,7 @@ public class ArmPID extends CommandBase {
         // present position to rotate the drive clockwise. We start
         // the motor within this block.
         if (upperRotate_init == 1) {
-            upperCount = arm.getUpperFalconEncoder();
+            upperCount = upperMotor.getSelectedSensorPosition(0);
 
             // Must rotate the upper arm theta + phi. The argument
             // "degrees" is the sum of phi and theta
@@ -656,7 +647,7 @@ public class ArmPID extends CommandBase {
                 power = 0.5;
 
             // Get it started
-            arm.setUpperMotor(power);
+            upperMotor.set(ControlMode.PercentOutput, power);
 
             upperCount = 0;
             upperRotate_init = 0;
@@ -676,12 +667,12 @@ public class ArmPID extends CommandBase {
 
                 delay.delay_milliseconds(5.0);
 
-                upperCount = arm.getUpperFalconEncoder();
+                upperCount = upperMotor.getSelectedSensorPosition(0);
 
                 error = upperTarget - upperCount; // In this case should be positive
 
                 if ((Math.abs(error) < upperDeadband) || (error < 0.0)) {
-                    arm.setUpperMotor(0);
+                    upperMotor.set(ControlMode.PercentOutput, 0.0);
                     upperRotation_complete = true;
                     System.out.printf("\nUpper Target = %.3f\n", upperTarget);
                     System.out.printf("\nUpper Final count = %.3f  error = %.3f\n", upperCount, error);
@@ -704,8 +695,7 @@ public class ArmPID extends CommandBase {
                 if (power > 0.5)
                     power = 0.5;
 
-                arm.setUpperMotor(power);
-                
+                upperMotor.set(ControlMode.PercentOutput, power);
 
                 if (debug == true) {
                     if (upperUpdate == 5) {
@@ -758,7 +748,7 @@ public class ArmPID extends CommandBase {
         // present position to rotate the drive counter clockwise. We start
         // the motor within this block.
         if (upperRotate_init == 1) {
-            upperCount = arm.getUpperFalconEncoder();
+            upperCount = upperMotor.getSelectedSensorPosition(0);
 
             // Must rotate the upper arm theta + phi. The argument
             // "degrees" is the sum of phi and theta
@@ -775,7 +765,7 @@ public class ArmPID extends CommandBase {
                 power = 0.5;
 
             // Get it started
-            arm.setUpperMotor(power);
+            upperMotor.set(ControlMode.PercentOutput, -power);
 
             upperCount = 0;
             upperRotate_init = 0;
@@ -795,14 +785,12 @@ public class ArmPID extends CommandBase {
 
                 delay.delay_milliseconds(5.0);
 
-                upperCount = arm.getUpperFalconEncoder();
-                
+                upperCount = upperMotor.getSelectedSensorPosition(0);
 
                 error = upperCount - upperTarget; // In this case should be positive
 
                 if ((Math.abs(error) < upperDeadband) || (error < 0.0)) {
-                    arm.setUpperMotor(0);
-                    
+                    upperMotor.set(ControlMode.PercentOutput, 0.0);
                     upperRotation_complete = true;
                     System.out.printf("\nUpper Target = %.3f\n", upperTarget);
                     System.out.printf("\nUpper Final count = %.3f  error = %.3f\n", upperCount, error);
@@ -827,8 +815,7 @@ public class ArmPID extends CommandBase {
                 if (power > 0.5)
                     power = 0.5;
 
-                arm.setUpperMotor(power);
-                
+                upperMotor.set(ControlMode.PercentOutput, -power);
 
                 if (debug == true) {
                     if (upperUpdate == 5) {
@@ -878,7 +865,7 @@ public class ArmPID extends CommandBase {
         // state correctly set we add the computed counts to the
         // present position to rotate the drive clockwise
         if (lowerRotate_init == 1) {
-            lowerCount = arm.getLowerFalconEncoder();
+            lowerCount = lowerMotor.getSelectedSensorPosition(0);
 
             // Must rotate the upper arm theta + phi. The argument
             // "degrees" is the sum of phi and theta
@@ -896,7 +883,7 @@ public class ArmPID extends CommandBase {
             // if(power<0.05)power=0.05;
 
             // Get it started
-            arm.setLowerMotor(power);
+            lowerMotor.set(ControlMode.PercentOutput, power);
             lowerCount = 0;
             lowerRotate_init = 0;
             lowerLast_error = 0;
@@ -915,12 +902,12 @@ public class ArmPID extends CommandBase {
 
                 delay.delay_milliseconds(5.0);
 
-                lowerCount = arm.getLowerFalconEncoder();
+                lowerCount = lowerMotor.getSelectedSensorPosition(0);
 
                 error = lowerTarget - lowerCount; // In this case should be positive
 
                 if ((Math.abs(error) < lowerDeadband) || (error < 0.0)) {
-                    arm.setLowerMotor(0);
+                    lowerMotor.set(ControlMode.PercentOutput, 0.0);
                     lowerRotation_complete = true;
                     System.out.printf("\nLower: target = %.3f\n", lowerTarget);
                     System.out.printf("\nLower: final count = %.3f  final error = %.3f\n", lowerCount, error);
@@ -942,7 +929,7 @@ public class ArmPID extends CommandBase {
                 if (power > 0.5)
                     power = 0.5;
 
-                arm.setLowerMotor(power);
+                lowerMotor.set(ControlMode.PercentOutput, power);
 
                 if (debug == true) {
                     if (lowerUpdate == 5) {
@@ -991,7 +978,7 @@ public class ArmPID extends CommandBase {
         // state correctly set we add the computed counts to the
         // present position to rotate the drive clockwise
         if (lowerRotate_init == 1) {
-            lowerCount = arm.getLowerFalconEncoder();
+            lowerCount = lowerMotor.getSelectedSensorPosition(0);
 
             // Must rotate the lower arm theta. In this case
             // (negative x coordinate), the target will be less
@@ -1011,7 +998,7 @@ public class ArmPID extends CommandBase {
                 power = 0.05;
 
             // Get it started
-            arm.setLowerMotor(-power);
+            lowerMotor.set(ControlMode.PercentOutput, -power);
             lowerCount = 0;
             lowerRotate_init = 0;
             lowerLast_error = 0;
@@ -1030,12 +1017,12 @@ public class ArmPID extends CommandBase {
 
                 delay.delay_milliseconds(5.0);
 
-                lowerCount = arm.getLowerFalconEncoder();
+                lowerCount = lowerMotor.getSelectedSensorPosition(0);
 
                 error = lowerCount - lowerTarget; // In this case should be positive
 
                 if ((Math.abs(error) < lowerDeadband) || (error < 0.0)) {
-                    arm.setLowerMotor(0);
+                    lowerMotor.set(ControlMode.PercentOutput, 0.0);
                     lowerRotation_complete = true;
                     System.out.printf("\nLower: target = %.3f\n", lowerTarget);
                     System.out.printf("\nLower: final count = %.3f  final error = %.3f\n", lowerCount, error);
@@ -1057,8 +1044,7 @@ public class ArmPID extends CommandBase {
                 if (power > 0.5)
                     power = 0.5;
 
-                arm.setLowerMotor(-power);
-                
+                lowerMotor.set(ControlMode.PercentOutput, -power);
 
                 if (debug == true) {
                     if (lowerUpdate == 5) {
@@ -1088,7 +1074,7 @@ public class ArmPID extends CommandBase {
     }
 
     double rotateLowerArm_CW(double degrees) {
-        boolean debug = true;
+        boolean debug = false;
         double error = 0;
 
         // These are used for the integral and derivative terms
@@ -1108,7 +1094,7 @@ public class ArmPID extends CommandBase {
         // state correctly set we add the computed counts to the
         // present position to rotate the drive clockwise
         if (lowerRotate_init == 1) {
-            lowerCount = arm.getLowerFalconEncoder();
+            lowerCount = lowerMotor.getSelectedSensorPosition(0);
 
             // Must rotate the upper arm theta + phi. The argument
             // "degrees" is the sum of phi and theta
@@ -1127,7 +1113,7 @@ public class ArmPID extends CommandBase {
                 power = 0.05;
 
             // Get it started
-            arm.setLowerMotor(power);
+            lowerMotor.set(ControlMode.PercentOutput, power);
             lowerCount = 0;
             lowerRotate_init = 0;
             lowerLast_error = 0;
@@ -1146,14 +1132,12 @@ public class ArmPID extends CommandBase {
 
                 delay.delay_milliseconds(5.0);
 
-                lowerCount = arm.getLowerFalconEncoder();
-                
+                lowerCount = lowerMotor.getSelectedSensorPosition(0);
 
                 error = lowerTarget - lowerCount; // In this case should be positive
 
                 if ((Math.abs(error) < lowerDeadband) || (error < 0.0)) {
-                    arm.setLowerMotor(0);
-                    
+                    lowerMotor.set(ControlMode.PercentOutput, 0.0);
                     lowerRotation_complete = true;
                     System.out.printf("\nLower: target = %.3f\n", lowerTarget);
                     System.out.printf("\nLower: final count = %.3f  final error = %.3f\n", lowerCount, error);
@@ -1175,8 +1159,7 @@ public class ArmPID extends CommandBase {
                 if (power > 0.5)
                     power = 0.5;
 
-                arm.setLowerMotor(power);
-                
+                lowerMotor.set(ControlMode.PercentOutput, power);
 
                 if (debug == true) {
                     if (lowerUpdate == 5) {

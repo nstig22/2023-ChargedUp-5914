@@ -75,6 +75,8 @@ public class RobotContainer {
         circle.onTrue(new ArmPID(arm, 30, 30));
         //circle.onTrue(new ArmPID(arm, circle, square, rightBumper));
 
+        square.onTrue(new ArmPID(arm, 30, 5));
+
         triangle.onTrue(new InstantCommand(() -> s_Swerve.zeroGyro()));
 
         touchpad.onTrue(new InstantCommand(() -> arm.switchHeading()));
