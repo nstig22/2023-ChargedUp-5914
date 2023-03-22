@@ -90,13 +90,10 @@ public class Robot extends TimedRobot {
     if (stick.getRawButton(1)){
       windowMotor.set(ControlMode.PercentOutput, 1);
     }
-    else{
-      windowMotor.set(ControlMode.PercentOutput, 0);
-    }
-
-    if (stick.getRawButton(2)){
+    else if (stick.getRawButton(2)){
       windowMotor.set(ControlMode.PercentOutput, -1);
     }
+
     else {
       windowMotor.set(ControlMode.PercentOutput, 0);
     }

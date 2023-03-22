@@ -98,9 +98,10 @@ public class Arm extends SubsystemBase {
         if (b1.getAsBoolean()) {
             windowMotor.set(ControlMode.PercentOutput, 1);
         }
-        if (b2.getAsBoolean()) {
+        else if (b2.getAsBoolean()) {
             windowMotor.set(ControlMode.PercentOutput, -1);
-        } else {
+        } 
+        else {
             windowMotor.set(ControlMode.PercentOutput, 0);
         }
     }
