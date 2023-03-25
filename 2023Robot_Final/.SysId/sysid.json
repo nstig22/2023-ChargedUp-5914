@@ -2,7 +2,7 @@
   "SysId": {
     "Analysis Type": "Drivetrain",
     "NetworkTables Settings": {
-      "serverTeam": "10.59.14.2"
+      "serverTeam": "172.22.11.2"
     },
     "mode": "Client (NT4)",
     "serverTeam": "10.59.14.2"

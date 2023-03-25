@@ -48,13 +48,11 @@ public class Arm extends SubsystemBase {
         upperArmMotor.setNeutralMode(NeutralMode.Brake);
         lowerArmMotor.setNeutralMode(NeutralMode.Brake);
 
-        upperArmMotor.setInverted(false);
-        lowerArmMotor.setInverted(true);
+        upperArmMotor.setInverted(true);
+        lowerArmMotor.setInverted(false);
 
         upperArmMotor.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 50);
         lowerArmMotor.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 50);
-
-        resetFalconEncoders();
 
         // Encoders
         upperArmEncoder = new DutyCycleEncoder(Constants.Arm.upperArmEncoderID);
@@ -73,6 +71,8 @@ public class Arm extends SubsystemBase {
         armSolenoid.set(Value.kReverse);
 
         comp.enableAnalog(110, 120);
+
+        resetFalconEncoders();
     }
 
     // Set motor values
@@ -175,5 +175,7 @@ public class Arm extends SubsystemBase {
     public void periodic() {
         SmartDashboard.putNumber("Upper Arm Encoder Value ", getUpperMagEncoder());
         SmartDashboard.putNumber("Lower Arm Encoder Value ", getLowerMagEncoder());
+        SmartDashboard.putNumber("Upper falcon encoder", getUpperFalconEncoder());
+        SmartDashboard.putNumber("Lower falcon encoder", getLowerFalconEncoder());
     }
 }

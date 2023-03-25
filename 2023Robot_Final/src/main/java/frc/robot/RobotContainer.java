@@ -2,10 +2,12 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PS4Controller;
+import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
-
+import edu.wpi.first.wpilibj2.command.button.POVButton;
 import frc.robot.autos.*;
 import frc.robot.commands.*;
 import frc.robot.subsystems.*;
@@ -41,6 +43,7 @@ public class RobotContainer {
     private final JoystickButton touchpad = new JoystickButton(stick, PS4Controller.Button.kTouchpad.value);
     private final JoystickButton share = new JoystickButton(stick, PS4Controller.Button.kShare.value);
     private final JoystickButton options = new JoystickButton(stick, PS4Controller.Button.kOptions.value);
+    private final JoystickButton ps = new JoystickButton(stick, PS4Controller.Button.kPS.value);
 
     /* Subsystems */
     private final Swerve s_Swerve = new Swerve();
@@ -56,11 +59,12 @@ public class RobotContainer {
                         () -> -stick.getRawAxis(leftStickY),
                         () -> -stick.getRawAxis(leftStickX),
                         () -> -stick.getRawAxis(rightStickX),
-                        () -> leftBumper.getAsBoolean()));
+                        () -> options.getAsBoolean()));
 
         arm.setDefaultCommand(
                 new ArmJoystick(arm, () -> stick.getRawAxis(rightStickY), () -> stick.getRawAxis(leftTrigger),
-                        () -> -stick.getRawAxis(rightTrigger), () -> share.getAsBoolean(), () -> options.getAsBoolean()));
+                        () -> -stick.getRawAxis(rightTrigger), () -> leftBumper.getAsBoolean(),
+                        () -> rightBumper.getAsBoolean()));
 
         // Configure the button bindings
         configureButtonBindings();
@@ -68,14 +72,19 @@ public class RobotContainer {
 
     private void configureButtonBindings() {
         /* Driver Buttons */
-        //square.onTrue(new InstantCommand(() -> s_Swerve.resetModulesToAbsolute()));
+        // square.onTrue(new InstantCommand(() -> s_Swerve.resetModulesToAbsolute()));
 
         cross.onTrue(new InstantCommand(() -> arm.toggleClaw()));
 
-        circle.onTrue(new ArmPID(arm, 30, 30));
-        //circle.onTrue(new ArmPID(arm, circle, square, rightBumper));
+        // circle.onTrue(new ArmPID(arm, 30, 30));
+        // circle.onTrue(new ArmPID(arm, circle, square, rightBumper));
+        circle.onTrue(new ArmPIDv2(arm, 105, 300));
 
-        triangle.onTrue(new InstantCommand(() -> s_Swerve.zeroGyro()));
+        triangle.onTrue(new ArmPIDv2(arm, 56, 283));
+
+        square.onTrue(new ArmPIDv2(arm, 113, 320));
+
+        ps.onTrue(new InstantCommand(() -> s_Swerve.zeroGyro()));
 
         touchpad.onTrue(new InstantCommand(() -> arm.switchHeading()));
     }
@@ -87,6 +96,11 @@ public class RobotContainer {
      */
     public Command getAutonomousCommand() {
         // An ExampleCommand will run in autonomous
-        return new testAuto(s_Swerve);
+        // return new SequentialCommandGroup(new ArmPIDv2(arm, 30, 350), new
+        // InstantCommand(() -> arm.toggleClaw()),
+        // new testAuto(s_Swerve));
+        // return new testAuto(s_Swerve);
+        return new SequentialCommandGroup(new AutoArmPID(arm, 108, 300), new AutoArmPID(arm, 108, 310));
+        // new testAuto(s_Swerve));
     }
 }

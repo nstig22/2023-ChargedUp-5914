@@ -25,13 +25,13 @@ public class testAuto extends SequentialCommandGroup {
                 .setKinematics(Constants.Swerve.swerveKinematics);
 
         // Trajectory config. All units in meters.
-        Trajectory testeTrajectory = TrajectoryGenerator.generateTrajectory(
+        Trajectory testTrajectory = TrajectoryGenerator.generateTrajectory(
                 // Start here
                 new Pose2d(0, 0, new Rotation2d(0)),
                 // Pass through these interior waypoints
-                List.of(new Translation2d(1, 0), new Translation2d(2, 0)),
+                List.of(new Translation2d(1, 0)),
                 // End here
-                new Pose2d(3, 0, new Rotation2d(0)),
+                new Pose2d(2, 0, new Rotation2d(0)),
                 config);
 
         var thetaController = new ProfiledPIDController(
@@ -39,7 +39,7 @@ public class testAuto extends SequentialCommandGroup {
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
 
         SwerveControllerCommand swerveControllerCommand = new SwerveControllerCommand(
-                testeTrajectory,
+                testTrajectory,
                 s_Swerve::getPose,
                 Constants.Swerve.swerveKinematics,
                 new PIDController(Constants.AutoConstants.kPXController, 0, 0),
@@ -49,7 +49,7 @@ public class testAuto extends SequentialCommandGroup {
                 s_Swerve);
 
         addCommands(
-                new InstantCommand(() -> s_Swerve.resetOdometry(testeTrajectory.getInitialPose())),
+                new InstantCommand(() -> s_Swerve.resetOdometry(testTrajectory.getInitialPose())),
                 swerveControllerCommand);
     }
 }

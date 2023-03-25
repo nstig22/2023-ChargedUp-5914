@@ -29,9 +29,20 @@ public class ArmJoystick extends CommandBase {
 
     @Override
     public void execute() {
-        double upperPower = -setUpperMotor.getAsDouble();
+        double upperPower = (-setUpperMotor.getAsDouble() * 0.5);
         double lowerPower = (-setLowerMotor.getAsDouble() - setLowerMotor2.getAsDouble());
         //double windowPower = setWindowMotor.getAsDouble();
+
+        if (arm.getUpperMagEncoder() >= 250 && arm.getUpperFalconEncoder() <= 240){
+            while (arm.getUpperMagEncoder() <= 230){
+                arm.setUpperMotor(0.5); //FIXME
+            }
+        }
+        if (arm.getUpperMagEncoder() >= 130 && arm.getUpperFalconEncoder() <= 140){
+            while (arm.getUpperMagEncoder() >= 120){
+                arm.setUpperMotor(-0.5); //FIXME
+            }
+        }
 
         arm.setUpperMotor(upperPower);
         arm.setLowerMotor(lowerPower);

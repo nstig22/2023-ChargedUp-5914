@@ -214,6 +214,11 @@ public class ArmPID extends CommandBase {
     public void end(boolean interrupted) {
         arm.setUpperMotor(0);
         arm.setLowerMotor(0);
+
+        moveInit = 1;
+
+        endCmd = false;
+
         System.out.println("\nArmPID command ended.\n");
     }
 
