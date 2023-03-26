@@ -67,12 +67,15 @@ public class ArmPIDv2 extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        if (arm.getUpperMagEncoder() >= 120 || arm.getUpperMagEncoder() <= 2) {
+        /*if (arm.getUpperMagEncoder() >= 120 || arm.getUpperMagEncoder() <= 2) {
             arm.setUpperMotor(0);
             arm.setLowerMotor(0);
             return true;
-        }
+        }*/
         if (upperPidController.atSetpoint() == true && lowerPidController.atSetpoint() == true) {
+            return true;
+        }
+        else if (timer.hasElapsed(5)){
             return true;
         }
         /*

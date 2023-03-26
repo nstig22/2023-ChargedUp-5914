@@ -2,12 +2,12 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PS4Controller;
-import edu.wpi.first.wpilibj.event.EventLoop;
+//import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
-import edu.wpi.first.wpilibj2.command.button.POVButton;
+//import edu.wpi.first.wpilibj2.command.button.POVButton;
 import frc.robot.autos.*;
 import frc.robot.commands.*;
 import frc.robot.subsystems.*;
@@ -78,7 +78,7 @@ public class RobotContainer {
 
         // circle.onTrue(new ArmPID(arm, 30, 30));
         // circle.onTrue(new ArmPID(arm, circle, square, rightBumper));
-        circle.onTrue(new ArmPIDv2(arm, 105, 300));
+        circle.onTrue(new ArmPIDv2(arm, 20, 328));
 
         triangle.onTrue(new ArmPIDv2(arm, 56, 283));
 
@@ -100,7 +100,7 @@ public class RobotContainer {
         // InstantCommand(() -> arm.toggleClaw()),
         // new testAuto(s_Swerve));
         // return new testAuto(s_Swerve);
-        return new SequentialCommandGroup(new AutoArmPID(arm, 108, 300), new AutoArmPID(arm, 108, 310));
+        return new SequentialCommandGroup(new AutoArmPID(arm, 108, 300));
         // new testAuto(s_Swerve));
     }
 }
