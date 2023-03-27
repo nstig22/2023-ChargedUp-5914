@@ -100,7 +100,7 @@ public class RobotContainer {
         // InstantCommand(() -> arm.toggleClaw()),
         // new testAuto(s_Swerve));
         // return new testAuto(s_Swerve);
-        return new SequentialCommandGroup(new AutoArmPID(arm, 108, 300));
-        // new testAuto(s_Swerve));
+        //return new SequentialCommandGroup(new AutoArmPID(arm, 108, 300));
+        return new testAuto(s_Swerve);
     }
 }
