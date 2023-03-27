@@ -42,7 +42,7 @@ public final class Constants {
         //public static final double driveGearRatio = (6.74 / 1.0);
         //public static final double angleGearRatio = (33.68 / 1.0);
 
-        //New numbers
+        /*New numbers - Not sure why this new drive gear ratio fixed the auto distance but it did. I think I calculated it wrong though.*/
         public static final double driveGearRatio = (2.38 / 1.0);
         public static final double angleGearRatio = (33.68 / 1.0);
         
