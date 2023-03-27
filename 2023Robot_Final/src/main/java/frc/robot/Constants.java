@@ -38,8 +38,14 @@ public final class Constants {
                 new Translation2d(-wheelBase / 2.0, -trackWidth / 2.0));
 
         /* Module Gear Ratios */
-        public static final double driveGearRatio = (6.74 / 1.0);
+        //Old numbers
+        //public static final double driveGearRatio = (6.74 / 1.0);
+        //public static final double angleGearRatio = (33.68 / 1.0);
+
+        //New numbers
+        public static final double driveGearRatio = (2.38 / 1.0);
         public static final double angleGearRatio = (33.68 / 1.0);
+        
 
         /* Motor Inverts */
         public static final boolean angleMotorInvert = false;
@@ -94,7 +100,7 @@ public final class Constants {
         public static final double maxAngularVelocity = 8; // TODO: This must be tuned to specific robot
 
         /* Neutral Modes */
-        public static final NeutralMode angleNeutralMode = NeutralMode.Brake;
+        public static final NeutralMode angleNeutralMode = NeutralMode.Coast;
         public static final NeutralMode driveNeutralMode = NeutralMode.Brake;
 
         /* Module Specific Constants */
@@ -146,7 +152,7 @@ public final class Constants {
     public static final class AutoConstants { // TODO: The below constants are used in the example auto, and must be
                                               // tuned to specific robot
         public static final double kMaxSpeedMetersPerSecond = 1;
-        public static final double kMaxAccelerationMetersPerSecondSquared = 2;
+        public static final double kMaxAccelerationMetersPerSecondSquared = 1;
         public static final double kMaxAngularSpeedRadiansPerSecond = Math.PI;
         public static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI;
 

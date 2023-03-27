@@ -122,10 +122,11 @@ public class Swerve extends SubsystemBase {
 
         for (SwerveModule mod : mSwerveMods) {
             SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Mag Encoder", mod.getMagEncoder().getDegrees());
-            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Integrated", mod.getPosition().angle.getDegrees());
-            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);
+            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Falcon Encoder", mod.getFalconEncoder());
+            //SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Integrated", mod.getPosition().angle.getDegrees());
+            //SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);
         }
-        SmartDashboard.putBoolean("navX calibrating", ahrs.isCalibrating());
+        //SmartDashboard.putBoolean("navX calibrating", ahrs.isCalibrating());
         SmartDashboard.putNumber("navX Gyro angle ", (360 - ahrs.getAngle()));
     }
 }
