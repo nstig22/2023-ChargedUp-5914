@@ -1,7 +1,10 @@
 package frc.robot;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PS4Controller;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 //import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -49,6 +52,13 @@ public class RobotContainer {
     private final Swerve s_Swerve = new Swerve();
     private final Arm arm = new Arm();
 
+    /* Autonomous routines */
+    private final Command driveFwd = new testAuto(s_Swerve);
+    private final Command midCube = new AutoArmPID(arm, 108, 300);
+
+    /* Sendable chooser for autonomous commands */
+    SendableChooser<Command> m_Chooser = new SendableChooser<>();
+
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
      */
@@ -68,7 +78,15 @@ public class RobotContainer {
 
         // Configure the button bindings
         configureButtonBindings();
-    }
+
+        //Add commands to the autonomous chooser
+        m_Chooser.setDefaultOption("High cube, mobility, & balance", null);
+        m_Chooser.addOption("Drive forward", driveFwd);
+        m_Chooser.addOption("Mid cube", midCube);
+
+        SmartDashboard.putData(m_Chooser);
+        DriverStation.silenceJoystickConnectionWarning(true);
+     }
 
     private void configureButtonBindings() {
         /* Driver Buttons */
@@ -101,6 +119,8 @@ public class RobotContainer {
         // new testAuto(s_Swerve));
         // return new testAuto(s_Swerve);
         //return new SequentialCommandGroup(new AutoArmPID(arm, 108, 300));
-        return new testAuto(s_Swerve);
+        //return new testAuto(s_Swerve);
+
+        return m_Chooser.getSelected();
     }
 }
