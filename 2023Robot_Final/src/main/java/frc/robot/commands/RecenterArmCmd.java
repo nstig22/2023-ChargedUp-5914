@@ -5,23 +5,26 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.Arm;
 
-public class AutoArmPID extends CommandBase {
+public class RecenterArmCmd extends CommandBase {
     private final Arm arm;
     private final Timer timer;
     private final PIDController upperPidController;
     private final PIDController lowerPidController;
 
-    public AutoArmPID(Arm arm, double upperSetpoint, double lowerSetpoint) {
+    public RecenterArmCmd(Arm arm) {
         this.arm = arm;
         this.upperPidController = new PIDController(0.01, 0, 0.001);
         this.lowerPidController = new PIDController(0.1, 0, 0.001);
+
+        upperPidController.setTolerance(4);
+        lowerPidController.setTolerance(4);
 
         timer = new Timer();
 
         timer.start();
 
-        upperPidController.setSetpoint(upperSetpoint);
-        lowerPidController.setSetpoint(lowerSetpoint);
+        upperPidController.setSetpoint(20);
+        lowerPidController.setSetpoint(328);
 
         addRequirements(arm);
     }
@@ -37,11 +40,11 @@ public class AutoArmPID extends CommandBase {
     public void execute() {
         double upperPower = upperPidController.calculate(arm.getUpperMagEncoder());
         double lowerPower = lowerPidController.calculate(arm.getLowerMagEncoder());
-
-        arm.setUpperMotor(-upperPower);
+        
+        arm.setLowerMotor(-lowerPower);
 
         if (upperPidController.atSetpoint()) {
-            arm.setLowerMotor(-lowerPower);
+            arm.setUpperMotor(upperPower);
         }
     }
 

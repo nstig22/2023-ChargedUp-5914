@@ -48,7 +48,7 @@ public class Arm extends SubsystemBase {
         upperArmMotor.setNeutralMode(NeutralMode.Brake);
         lowerArmMotor.setNeutralMode(NeutralMode.Brake);
 
-        upperArmMotor.setInverted(true);
+        upperArmMotor.setInverted(false);
         lowerArmMotor.setInverted(false);
 
         upperArmMotor.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 50);

@@ -41,7 +41,8 @@ public class Swerve extends SubsystemBase {
          * See https://github.com/Team364/BaseFalconSwerve/issues/8 for more info.
          */
         Timer.delay(1.0);
-        resetModulesToAbsolute();
+        //FIXME testing without this line
+        //resetModulesToAbsolute();
         ahrs.calibrate();
         ahrs.zeroYaw();
 
@@ -128,5 +129,6 @@ public class Swerve extends SubsystemBase {
         }
         //SmartDashboard.putBoolean("navX calibrating", ahrs.isCalibrating());
         SmartDashboard.putNumber("navX Gyro angle ", (360 - ahrs.getAngle()));
+        SmartDashboard.putNumber("Navx Pitch: ", ahrs.getPitch());
     }
 }

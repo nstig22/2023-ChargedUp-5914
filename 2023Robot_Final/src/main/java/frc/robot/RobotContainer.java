@@ -55,6 +55,7 @@ public class RobotContainer {
     /* Autonomous routines */
     private final Command driveFwd = new testAuto(s_Swerve);
     private final Command midCube = new AutoArmPID(arm, 108, 300);
+    private final Command balance = new autoBalanceCmd(s_Swerve);
 
     /* Sendable chooser for autonomous commands */
     SendableChooser<Command> m_Chooser = new SendableChooser<>();
@@ -83,6 +84,7 @@ public class RobotContainer {
         m_Chooser.setDefaultOption("High cube, mobility, & balance", null);
         m_Chooser.addOption("Drive forward", driveFwd);
         m_Chooser.addOption("Mid cube", midCube);
+        m_Chooser.addOption("Balance", balance);
 
         SmartDashboard.putData(m_Chooser);
         DriverStation.silenceJoystickConnectionWarning(true);
@@ -96,7 +98,7 @@ public class RobotContainer {
 
         // circle.onTrue(new ArmPID(arm, 30, 30));
         // circle.onTrue(new ArmPID(arm, circle, square, rightBumper));
-        circle.onTrue(new ArmPIDv2(arm, 20, 328));
+        circle.onTrue(new RecenterArmCmd(arm));
 
         triangle.onTrue(new ArmPIDv2(arm, 56, 283));
 
@@ -113,14 +115,6 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public Command getAutonomousCommand() {
-        // An ExampleCommand will run in autonomous
-        // return new SequentialCommandGroup(new ArmPIDv2(arm, 30, 350), new
-        // InstantCommand(() -> arm.toggleClaw()),
-        // new testAuto(s_Swerve));
-        // return new testAuto(s_Swerve);
-        //return new SequentialCommandGroup(new AutoArmPID(arm, 108, 300));
-        //return new testAuto(s_Swerve);
-
         return m_Chooser.getSelected();
     }
 }
