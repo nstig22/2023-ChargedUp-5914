@@ -36,7 +36,7 @@ public class autoBalanceCmd extends CommandBase {
 
     @Override
     public void execute() {
-        /*if (Math.abs(s_Swerve.ahrs.getPitch()) >= 12){
+        if (Math.abs(s_Swerve.ahrs.getPitch()) >= 12){
             speed = 0.1;
             onChargeStation = true;
         }
@@ -49,7 +49,7 @@ public class autoBalanceCmd extends CommandBase {
                     mod.setDesiredState(lock, false);
                 }
             }
-        }*/
+        }
         
         for (SwerveModule mod : s_Swerve.mSwerveMods){
             mod.setDesiredState(fwd, true);
