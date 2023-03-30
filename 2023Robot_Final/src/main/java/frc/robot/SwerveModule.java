@@ -160,6 +160,9 @@ public class SwerveModule {
         mDriveMotor.configFactoryDefault();
         mDriveMotor.configAllSettings(Robot.ctreConfigs.swerveDriveFXConfig);
         mDriveMotor.setInverted(Constants.Swerve.driveMotorInvert);
+        /*if (moduleNumber == 0){
+            mDriveMotor.setInverted(false);
+        }*/         
         mDriveMotor.setNeutralMode(Constants.Swerve.driveNeutralMode);
         mDriveMotor.setSelectedSensorPosition(0);
     }

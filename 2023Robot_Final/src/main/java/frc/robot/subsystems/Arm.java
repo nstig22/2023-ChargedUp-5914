@@ -48,8 +48,8 @@ public class Arm extends SubsystemBase {
         upperArmMotor.setNeutralMode(NeutralMode.Brake);
         lowerArmMotor.setNeutralMode(NeutralMode.Brake);
 
-        upperArmMotor.setInverted(false);
-        lowerArmMotor.setInverted(false);
+        upperArmMotor.setInverted(true);
+        lowerArmMotor.setInverted(true);
 
         upperArmMotor.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 50);
         lowerArmMotor.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 50);
@@ -153,7 +153,7 @@ public class Arm extends SubsystemBase {
     }
 
     // Switch heading
-    public void switchHeading() {
+    /*public void switchHeading() {
         inverted = !inverted;
 
         upperArmMotor.setInverted(inverted);
@@ -164,7 +164,7 @@ public class Arm extends SubsystemBase {
         } else if (!inverted) {
             System.out.println("\nInverted == false\n");
         }
-    }
+    }*/
 
     // TODO Implement limit to avoid extending beyond max height
     public void heightLimit() {

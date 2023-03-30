@@ -44,7 +44,8 @@ public class Swerve extends SubsystemBase {
         //FIXME testing without this line
         //resetModulesToAbsolute();
         ahrs.calibrate();
-        ahrs.zeroYaw();
+        ahrs.setAngleAdjustment(180);
+        
 
         swerveOdometry = new SwerveDriveOdometry(Constants.Swerve.swerveKinematics, getYaw(), getModulePositions());
     }

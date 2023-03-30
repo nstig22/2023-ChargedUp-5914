@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 //import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 //import edu.wpi.first.wpilibj2.command.button.POVButton;
@@ -54,8 +55,15 @@ public class RobotContainer {
 
     /* Autonomous routines */
     private final Command driveFwd = new testAuto(s_Swerve);
-    private final Command midCube = new AutoArmPID(arm, 108, 300);
+    private final Command midCubeExit = new SequentialCommandGroup(new AutoArmPID(arm, 295, 340),
+            new InstantCommand(() -> arm.toggleClaw()), new ParallelCommandGroup(new testAuto(s_Swerve)),
+            new AutoArmPID(arm, 354, 312));
     private final Command balance = new autoBalanceCmd(s_Swerve);
+    private final Command testBalance = new balanceAuto(s_Swerve);
+    private final Command highCubeExit = new SequentialCommandGroup(new AutoArmPID(arm, 258, 354),
+            new InstantCommand(() -> arm.toggleClaw()),
+            new ParallelCommandGroup(new InstantCommand(() -> arm.toggleClaw()), new AutoArmPID(arm, 354, 312),
+                    new testAuto(s_Swerve)));
 
     /* Sendable chooser for autonomous commands */
     SendableChooser<Command> m_Chooser = new SendableChooser<>();
@@ -67,9 +75,9 @@ public class RobotContainer {
         s_Swerve.setDefaultCommand(
                 new TeleopSwerve(
                         s_Swerve,
-                        () -> -stick.getRawAxis(leftStickY),
-                        () -> -stick.getRawAxis(leftStickX),
-                        () -> -stick.getRawAxis(rightStickX),
+                        () -> stick.getRawAxis(leftStickY),
+                        () -> stick.getRawAxis(leftStickX),
+                        () -> stick.getRawAxis(rightStickX),
                         () -> options.getAsBoolean()));
 
         arm.setDefaultCommand(
@@ -80,15 +88,17 @@ public class RobotContainer {
         // Configure the button bindings
         configureButtonBindings();
 
-        //Add commands to the autonomous chooser
+        // Add commands to the autonomous chooser
         m_Chooser.setDefaultOption("High cube, mobility, & balance", null);
         m_Chooser.addOption("Drive forward", driveFwd);
-        m_Chooser.addOption("Mid cube", midCube);
+        m_Chooser.addOption("Mid cube and exit", midCubeExit);
+        m_Chooser.addOption("High cube", highCubeExit);
         m_Chooser.addOption("Balance", balance);
+        m_Chooser.addOption("test balance", testBalance);
 
         SmartDashboard.putData(m_Chooser);
         DriverStation.silenceJoystickConnectionWarning(true);
-     }
+    }
 
     private void configureButtonBindings() {
         /* Driver Buttons */
@@ -98,15 +108,15 @@ public class RobotContainer {
 
         // circle.onTrue(new ArmPID(arm, 30, 30));
         // circle.onTrue(new ArmPID(arm, circle, square, rightBumper));
-        circle.onTrue(new RecenterArmCmd(arm));
+        circle.onTrue(new ArmPIDv2(arm, 354, 312));
 
-        triangle.onTrue(new ArmPIDv2(arm, 56, 283));
+        triangle.onTrue(new ArmPIDv2(arm, 295, 340));
 
-        square.onTrue(new ArmPIDv2(arm, 113, 320));
+        square.onTrue(new ArmPIDv2(arm, 280, 320));
 
         ps.onTrue(new InstantCommand(() -> s_Swerve.zeroGyro()));
 
-        touchpad.onTrue(new InstantCommand(() -> arm.switchHeading()));
+        // touchpad.onTrue(new InstantCommand(() -> arm.switchHeading()));
     }
 
     /**

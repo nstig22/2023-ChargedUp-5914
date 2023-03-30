@@ -14,7 +14,7 @@ public class ArmPIDv2 extends CommandBase {
     public ArmPIDv2(Arm arm, double upperSetpoint, double lowerSetpoint) {
         this.arm = arm;
         this.upperPidController = new PIDController(0.05, 0, 0.001);
-        this.lowerPidController = new PIDController(0.1, 0, 0.001);
+        this.lowerPidController = new PIDController(0.05, 0.01, 0.001);
 
         timer = new Timer();
 
@@ -23,15 +23,17 @@ public class ArmPIDv2 extends CommandBase {
         upperPidController.setSetpoint(upperSetpoint);
         lowerPidController.setSetpoint(lowerSetpoint);
 
-        upperPidController.setTolerance(2);
-        lowerPidController.setTolerance(2);
+        upperPidController.setTolerance(4);
+        lowerPidController.setTolerance(4);
 
         addRequirements(arm);
     }
 
     @Override
     public void initialize() {
-        // System.out.println("\nArmPIDv2 command started\n");
+        System.out.println("\nArmPIDv2 command started\n");
+        timer.reset();
+        // timer.start();
         upperPidController.reset();
         lowerPidController.reset();
     }
@@ -41,49 +43,69 @@ public class ArmPIDv2 extends CommandBase {
         double upperPower = upperPidController.calculate(arm.getUpperMagEncoder());
         double lowerPower = lowerPidController.calculate(arm.getLowerMagEncoder());
 
-        if (upperPower > 0.5) {
+        /*if (upperPower > 0.5) {
             upperPower = 0.5;
+        } else if (upperPower < -0.5) {
+            upperPower = -0.5;
         }
         if (lowerPower > 0.5) {
             lowerPower = 0.5;
-        }
-        if (upperPower < -0.5) {
-            upperPower = -0.5;
-        }
-        if (lowerPower < -0.5) {
+        } else if (lowerPower < -0.5) {
             lowerPower = -0.5;
-        }
+        }*/
 
         arm.setUpperMotor(upperPower);
-        arm.setLowerMotor(-lowerPower);
+
+        if (arm.getLowerMagEncoder() >= 0 && arm.getLowerMagEncoder() <= 20){
+            arm.setLowerMotor(-lowerPower);
+        }
+        else{
+            arm.setLowerMotor(lowerPower);
+        }
     }
 
     @Override
     public void end(boolean interrupted) {
         arm.setUpperMotor(0);
         arm.setLowerMotor(0);
-        // System.out.println("\nArmPIDv2 command ended\n");
+        System.out.println("\nArmPIDv2 command ended\n");
+        // System.out.println(upperPower, lowerPower);
     }
 
     @Override
     public boolean isFinished() {
-        /*if (arm.getUpperMagEncoder() >= 120 || arm.getUpperMagEncoder() <= 2) {
-            arm.setUpperMotor(0);
-            arm.setLowerMotor(0);
-            return true;
-        }*/
-        if (upperPidController.atSetpoint() == true && lowerPidController.atSetpoint() == true) {
-            return true;
-        }
-        else if (timer.hasElapsed(5)){
-            return true;
-        }
         /*
-         * if (timer.hasElapsed(4)){
+         * if (arm.getUpperMagEncoder() >= 120 || arm.getUpperMagEncoder() <= 2) {
+         * arm.setUpperMotor(0);
+         * arm.setLowerMotor(0);
          * return true;
          * }
          */
-        else {
+        if (upperPidController.atSetpoint() && lowerPidController.atSetpoint()) {
+            System.out.println("\nSetpoints hit");
+            return true;
+        }
+        if (arm.getUpperMagEncoder() >= 360) {
+            System.out.println("\nUpper backwards limit hit");
+            return true;
+        }
+        if (arm.getUpperMagEncoder() >= 190 && arm.getUpperMagEncoder() <= 200) {
+            System.out.println("\nUpper forwards limit hit");
+            return true;
+        }
+        if (arm.getLowerMagEncoder() >= 290 && arm.getLowerMagEncoder() <= 300) {
+            System.out.println("\nLower backwards limit hit");
+            return true;
+        }
+        if (arm.getLowerMagEncoder() >= 20 && arm.getLowerMagEncoder() <= 50) {
+            System.out.println("\nLower forwards limit hit");
+            return true;
+        }
+        if (timer.advanceIfElapsed(5)) {
+            // timer.reset();
+            System.out.println("\nExit on time\n");
+            return true;
+        } else {
             return false;
         }
     }

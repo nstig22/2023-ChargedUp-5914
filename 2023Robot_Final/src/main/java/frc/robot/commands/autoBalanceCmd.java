@@ -1,9 +1,14 @@
 package frc.robot.commands;
 
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
+
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import frc.robot.Constants;
 import frc.robot.SwerveModule;
 import frc.robot.subsystems.Swerve;;
 
@@ -11,11 +16,15 @@ public class autoBalanceCmd extends CommandBase {
     private final Swerve s_Swerve;
     private Timer timer;
 
+    //private TalonFX driveMotor = new TalonFX(1);
+
     SwerveModuleState fwd;
     SwerveModuleState stop;
     SwerveModuleState lock;
 
-    double speed = 1;
+    SwerveModuleState[] states = {fwd};
+
+    double speed = 0.5;
     boolean onChargeStation = false;
 
     public autoBalanceCmd(Swerve s_Swerve) {
@@ -51,22 +60,43 @@ public class autoBalanceCmd extends CommandBase {
             }
         }
         
-        for (SwerveModule mod : s_Swerve.mSwerveMods){
-            mod.setDesiredState(fwd, true);
-        }
+        /*for (SwerveModule mod : s_Swerve.mSwerveMods){
+            //mod.setDesiredState(fwd, true);
+        }*/
+
+        //s_Swerve.mSwerveMods[0].setDesiredState(fwd, false);
+
+        //driveMotor.set(ControlMode.PercentOutput, 1);
+
+        //s_Swerve.setModuleStates(states);
+        /*for (SwerveModule mod : s_Swerve.mSwerveMods){
+            //mod.mDriveMotor.set(ControlMode.PercentOutput, 0.5);
+        }*/
+
+        s_Swerve.drive(
+                new Translation2d(0.5, 0).times(Constants.Swerve.maxSpeed),
+                0 * Constants.Swerve.maxAngularVelocity,
+                false,
+                true);
     }
+    
 
     @Override
     public void end(boolean interrupted) {
         System.out.println("\nAutoBalance command ended\n");
-        for (SwerveModule mod : s_Swerve.mSwerveMods){
+        /*for (SwerveModule mod : s_Swerve.mSwerveMods){
             mod.setDesiredState(lock, true);
-        }
+        }*/
+        /*s_Swerve.drive(
+                new Translation2d(0, 0.5).times(Constants.Swerve.maxSpeed),
+                0 * Constants.Swerve.maxAngularVelocity,
+                false,
+                true);*/
     }
 
     @Override
     public boolean isFinished() {
-        if (timer.hasElapsed(7)){
+        if (timer.hasElapsed(4)){
             return true;
         }
         else{
