@@ -43,23 +43,24 @@ public class ArmPIDv2 extends CommandBase {
         double upperPower = upperPidController.calculate(arm.getUpperMagEncoder());
         double lowerPower = lowerPidController.calculate(arm.getLowerMagEncoder());
 
-        /*if (upperPower > 0.5) {
-            upperPower = 0.5;
-        } else if (upperPower < -0.5) {
-            upperPower = -0.5;
-        }
-        if (lowerPower > 0.5) {
-            lowerPower = 0.5;
-        } else if (lowerPower < -0.5) {
-            lowerPower = -0.5;
-        }*/
+        /*
+         * if (upperPower > 0.5) {
+         * upperPower = 0.5;
+         * } else if (upperPower < -0.5) {
+         * upperPower = -0.5;
+         * }
+         * if (lowerPower > 0.5) {
+         * lowerPower = 0.5;
+         * } else if (lowerPower < -0.5) {
+         * lowerPower = -0.5;
+         * }
+         */
 
         arm.setUpperMotor(upperPower);
 
-        if (arm.getLowerMagEncoder() >= 0 && arm.getLowerMagEncoder() <= 20){
+        if (arm.getLowerMagEncoder() >= 0 && arm.getLowerMagEncoder() <= 20 /*|| lowerPidController.getSetpoint() <= 20*/) {
             arm.setLowerMotor(-lowerPower);
-        }
-        else{
+        } else {
             arm.setLowerMotor(lowerPower);
         }
     }
@@ -85,20 +86,20 @@ public class ArmPIDv2 extends CommandBase {
             System.out.println("\nSetpoints hit");
             return true;
         }
-        if (arm.getUpperMagEncoder() >= 360) {
-            System.out.println("\nUpper backwards limit hit");
+        if (arm.getUpperMagEncoder() >= 360 || arm.getUpperMagEncoder() <= 10) {
+            System.out.println("\nUpper backwards PID limit hit");
             return true;
         }
-        if (arm.getUpperMagEncoder() >= 190 && arm.getUpperMagEncoder() <= 200) {
-            System.out.println("\nUpper forwards limit hit");
+        if (arm.getUpperMagEncoder() >= 180 && arm.getUpperMagEncoder() <= 192) {
+            System.out.println("\nUpper forwards PID limit hit");
             return true;
         }
         if (arm.getLowerMagEncoder() >= 290 && arm.getLowerMagEncoder() <= 300) {
-            System.out.println("\nLower backwards limit hit");
+            System.out.println("\nLower backwards PID limit hit");
             return true;
         }
         if (arm.getLowerMagEncoder() >= 20 && arm.getLowerMagEncoder() <= 50) {
-            System.out.println("\nLower forwards limit hit");
+            System.out.println("\nLower forwards PID limit hit");
             return true;
         }
         if (timer.advanceIfElapsed(5)) {

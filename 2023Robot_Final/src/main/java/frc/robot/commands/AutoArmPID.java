@@ -80,7 +80,7 @@ public class AutoArmPID extends CommandBase {
 
         if (arm.getLowerMagEncoder() >= 0 && arm.getLowerMagEncoder() <= 5 || arm.getLowerMagEncoder() >= 315) {
             if (arm.getUpperMagEncoder() <= 255 && arm.getUpperMagEncoder() >= 225) {
-                System.out.println("\n6'6'' limit hit");
+                System.out.println("\n6'6'' auto PID limit hit");
                 return true;
             }
         }
@@ -92,20 +92,20 @@ public class AutoArmPID extends CommandBase {
          * upperPower = 0.25;
          * }
          */
-        if (arm.getUpperMagEncoder() >= 360) {
-            System.out.println("\nUpper backwards limit hit");
+        if (arm.getUpperMagEncoder() >= 360 || arm.getUpperMagEncoder() <= 10) {
+            System.out.println("\nUpper backwards auto PID limit hit");
             return true;
         }
         if (arm.getUpperMagEncoder() >= 180 && arm.getUpperMagEncoder() <= 192) {
-            System.out.println("\nUpper forwards limit hit");
+            System.out.println("\nUpper forwards auto PID limit hit");
             return true;
         }
         if (arm.getLowerMagEncoder() >= 290 && arm.getLowerMagEncoder() <= 300) {
-            System.out.println("\nLower backwards limit hit");
+            System.out.println("\nLower backwards auto PID limit hit");
             return true;
         }
         if (arm.getLowerMagEncoder() >= 20 && arm.getLowerMagEncoder() <= 50) {
-            System.out.println("\nLower forwards limit hit");
+            System.out.println("\nLower forwards auto PID limit hit");
             return true;
         } else {
             return false;

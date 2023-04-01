@@ -1,8 +1,5 @@
 package frc.robot.commands;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.TalonFX;
-
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -15,8 +12,6 @@ import frc.robot.subsystems.Swerve;;
 public class autoBalanceCmd extends CommandBase {
     private final Swerve s_Swerve;
     private Timer timer;
-
-    //private TalonFX driveMotor = new TalonFX(1);
 
     SwerveModuleState fwd;
     SwerveModuleState stop;
@@ -45,7 +40,7 @@ public class autoBalanceCmd extends CommandBase {
 
     @Override
     public void execute() {
-        if (Math.abs(s_Swerve.ahrs.getPitch()) >= 12){
+        /*if (Math.abs(s_Swerve.ahrs.getPitch()) >= 12){
             speed = 0.1;
             onChargeStation = true;
         }
@@ -58,7 +53,7 @@ public class autoBalanceCmd extends CommandBase {
                     mod.setDesiredState(lock, false);
                 }
             }
-        }
+        }*/
         
         /*for (SwerveModule mod : s_Swerve.mSwerveMods){
             //mod.setDesiredState(fwd, true);
@@ -74,9 +69,9 @@ public class autoBalanceCmd extends CommandBase {
         }*/
 
         s_Swerve.drive(
-                new Translation2d(0.5, 0).times(Constants.Swerve.maxSpeed),
+                new Translation2d(2, 0).times(Constants.Swerve.maxSpeed),
                 0 * Constants.Swerve.maxAngularVelocity,
-                false,
+                true,
                 true);
     }
     

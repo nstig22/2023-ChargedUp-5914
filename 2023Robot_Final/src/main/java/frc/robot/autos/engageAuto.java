@@ -17,8 +17,8 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 
-public class testAuto extends SequentialCommandGroup {
-    public testAuto(Swerve s_Swerve) {
+public class engageAuto extends SequentialCommandGroup {
+    public engageAuto(Swerve s_Swerve) {
         TrajectoryConfig config = new TrajectoryConfig(
                 Constants.AutoConstants.kMaxSpeedMetersPerSecond,
                 Constants.AutoConstants.kMaxAccelerationMetersPerSecondSquared)
@@ -31,7 +31,7 @@ public class testAuto extends SequentialCommandGroup {
                 // Pass through these interior waypoints
                 List.of(new Translation2d(1, 0)),
                 // End here
-                new Pose2d(4, 0, new Rotation2d(0)),
+                new Pose2d(2.7, 0, new Rotation2d(0)),
                 config);
 
         var thetaController = new ProfiledPIDController(

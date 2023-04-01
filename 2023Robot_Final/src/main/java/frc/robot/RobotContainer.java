@@ -64,11 +64,16 @@ public class RobotContainer {
             new InstantCommand(() -> arm.toggleClaw()),
             new ParallelCommandGroup(new InstantCommand(() -> arm.toggleClaw()), new AutoArmPID(arm, 354, 312),
                     new testAuto(s_Swerve)));
+    private final Command highCubeEngage = new SequentialCommandGroup(new AutoArmPID(arm, 258, 354),
+            new InstantCommand(() -> arm.toggleClaw()), new ParallelCommandGroup(new AutoArmPID(arm, 354, 312)),
+            new engageAuto(s_Swerve));
+    private final Command highCube = new AutoArmPID(arm, 258, 354);
+    private final Command noAuto = null;
 
     /* Sendable chooser for autonomous commands */
     SendableChooser<Command> m_Chooser = new SendableChooser<>();
 
-    /**
+    /** 
      * The container for the robot. Contains subsystems, OI devices, and commands.
      */
     public RobotContainer() {
@@ -89,12 +94,15 @@ public class RobotContainer {
         configureButtonBindings();
 
         // Add commands to the autonomous chooser
-        m_Chooser.setDefaultOption("High cube, mobility, & balance", null);
+        // m_Chooser.setDefaultOption("High cube, mobility, & balance", null);
         m_Chooser.addOption("Drive forward", driveFwd);
         m_Chooser.addOption("Mid cube and exit", midCubeExit);
-        m_Chooser.addOption("High cube", highCubeExit);
-        m_Chooser.addOption("Balance", balance);
-        m_Chooser.addOption("test balance", testBalance);
+        m_Chooser.addOption("High cube and exit", highCubeExit);
+        m_Chooser.addOption("High cube and engage", highCubeEngage);
+        m_Chooser.addOption("High cube no drive", highCube);
+        m_Chooser.addOption("No auto", noAuto);
+        // m_Chooser.addOption("Balance", balance);
+        // m_Chooser.addOption("test balance", testBalance);
 
         SmartDashboard.putData(m_Chooser);
         DriverStation.silenceJoystickConnectionWarning(true);
@@ -110,9 +118,11 @@ public class RobotContainer {
         // circle.onTrue(new ArmPID(arm, circle, square, rightBumper));
         circle.onTrue(new ArmPIDv2(arm, 354, 312));
 
-        triangle.onTrue(new ArmPIDv2(arm, 295, 340));
+        triangle.onTrue(new ArmPIDv2(arm, 273, 338));
 
-        square.onTrue(new ArmPIDv2(arm, 280, 320));
+        square.onTrue(new ArmPIDv2(arm, 304, 310));
+
+        touchpad.onTrue(new ArmPIDv2(arm, 210, 350));
 
         ps.onTrue(new InstantCommand(() -> s_Swerve.zeroGyro()));
 

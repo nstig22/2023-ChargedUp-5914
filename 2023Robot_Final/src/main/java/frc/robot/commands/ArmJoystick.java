@@ -50,7 +50,7 @@ public class ArmJoystick extends CommandBase {
         if (arm.getLowerMagEncoder() >= 0 && arm.getLowerMagEncoder() <= 5
                 || arm.getLowerMagEncoder() >= 315 && arm.getLowerMagEncoder() <= 340) {
             if (arm.getUpperMagEncoder() <= 255 && arm.getUpperMagEncoder() >= 225) {
-                System.out.println("\n6'6'' limit hit");
+                System.out.println("\n6'6'' joystick limit hit");
                 upperPower = 0.25;
             }
         }
@@ -62,20 +62,20 @@ public class ArmJoystick extends CommandBase {
          * upperPower = 0.25;
          * }
          */
-        if (arm.getUpperMagEncoder() >= 358) {
-            System.out.println("\nUpper backwards limit hit");
+        if (arm.getUpperMagEncoder() >= 358 || arm.getUpperMagEncoder() <= 10) {
+            System.out.println("\nUpper backwards joystick limit hit");
             upperPower = -0.25;
         }
         if (arm.getUpperMagEncoder() >= 180 && arm.getUpperMagEncoder() <= 192) {
-            System.out.println("\nUpper forwards limit hit");
+            System.out.println("\nUpper forwards joystick limit hit");
             upperPower = 0.25;
         }
         if (arm.getLowerMagEncoder() >= 290 && arm.getLowerMagEncoder() <= 300) {
-            System.out.println("\nLower backwards limit hit");
+            System.out.println("\nLower backwards joystick limit hit");
             lowerPower = 0.25;
         }
         if (arm.getLowerMagEncoder() >= 20 && arm.getLowerMagEncoder() <= 50) {
-            System.out.println("\nLower forwards limit hit");
+            System.out.println("\nLower forwards joystick limit hit");
             lowerPower = -0.25;
         }
 
